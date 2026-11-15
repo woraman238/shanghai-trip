@@ -1,9 +1,19 @@
 {
-  "name": "Shanghai Trip Planner",
+  "name": "Shanghai Trip Planner · เที่ยวเซี่ยงไฮ้",
   "short_name": "เที่ยวเซี่ยงไฮ้",
+  "description": "วางแผนเที่ยวเซี่ยงไฮ้ แชร์เรียลไทม์กับแก๊งเพื่อน หารค่าใช้จ่าย แผนที่ และการเดินทางในจีน",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#f6f4f0",
   "theme_color": "#c8102e",
-  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
