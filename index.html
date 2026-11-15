@@ -106,7 +106,29 @@ body.dark .phr .zh{color:#ff6b81}
 .star{font-size:22px;color:var(--line);cursor:pointer;line-height:1}.star.on{color:var(--gold)}
 .rate{display:grid;gap:4px;margin-bottom:10px}
 .fab{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:900;border-radius:99px;padding:10px 15px;box-shadow:0 4px 14px rgba(200,16,46,.4);font-weight:600}
-@media(max-width:600px){.time{width:46px}h1{font-size:20px}.hero b{font-size:32px}.big2{font-size:32px}main{padding:12px}.card{padding:14px}}
+.pwall{display:grid;grid-template-columns:repeat(auto-fill,minmax(162px,1fr));gap:16px;padding:8px 2px 12px}
+.pcard{background:#fffdf9;color:#1f2328;border:1px solid #e5dec9;border-radius:12px;padding:10px 10px 12px;box-shadow:0 6px 16px rgba(0,0,0,.1);position:relative;cursor:pointer;transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column}
+body.dark .pcard{background:#252830;color:#f3f4f6;border-color:#383d47;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.pcard:nth-child(odd){transform:rotate(-1.3deg)}
+.pcard:nth-child(even){transform:rotate(1.3deg)}
+.pcard:hover{transform:rotate(0deg) translateY(-4px) scale(1.02);box-shadow:0 12px 24px rgba(0,0,0,.18);z-index:2}
+.ptape{position:absolute;top:-8px;left:50%;transform:translateX(-50%) rotate(-2deg);padding:1px 12px;border-radius:3px;font-size:11px;font-weight:700;color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);opacity:.92;white-space:nowrap;z-index:3}
+.pframe{position:relative;aspect-ratio:1;border-radius:6px;overflow:hidden;background:var(--bg);display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,0,0,.06)}
+.pframe img{width:100%;height:100%;object-fit:cover;display:block}
+.pframe.empty{border:2px dashed var(--line);flex-direction:column;gap:4px;padding:10px;text-align:center;color:var(--mute)}
+.psticker{position:absolute;top:6px;left:6px;font-size:26px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35));pointer-events:none}
+.pstamp{position:absolute;bottom:6px;right:6px;border:2px solid #c8102e;color:#c8102e;background:rgba(255,252,245,.9);font-weight:700;font-size:11px;padding:1px 6px;border-radius:4px;transform:rotate(-10deg);box-shadow:0 1px 3px rgba(0,0,0,.15);pointer-events:none}
+.pcap{margin-top:8px;flex:1;display:flex;flex-direction:column;justify-content:space-between}
+.pcap .pt{font-weight:600;font-size:13.5px;line-height:1.3}
+.pcap .pzh{font-size:12px;color:#c8102e;font-weight:600}
+body.dark .pcap .pzh{color:#ff7b8b}
+.pcap .pnote{font-size:12px;color:var(--mute);margin-top:3px;font-style:italic}
+.ithumb{width:46px;height:46px;border-radius:8px;object-fit:cover;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.22);cursor:pointer;flex:none;background:var(--bg)}
+.phin{width:42px;height:42px;border-radius:10px;border:2.5px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.45);background-size:cover;background-position:center;position:relative}
+.phin i{position:absolute;bottom:-5px;right:-5px;width:18px;height:18px;border-radius:50%;color:#fff;font:700 10px Prompt,sans-serif;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff}
+.stpick{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;font-size:20px;border-radius:10px;border:1px solid var(--line);background:var(--bg);cursor:pointer;transition:transform .1s}
+.stpick.on{border:2px solid var(--red);background:rgba(200,16,46,.1);transform:scale(1.1)}
+@media(max-width:600px){.time{width:46px}h1{font-size:20px}.hero b{font-size:32px}.big2{font-size:32px}main{padding:12px}.card{padding:14px}.pwall{grid-template-columns:repeat(2,1fr);gap:12px}}
 @media print{header,.navwrap,.btn,.acts,.noprint,.fab,input[type=checkbox]{display:none!important}body{background:#fff;color:#000}.card{break-inside:avoid;border-color:#ccc;box-shadow:none}}
 </style>
 </head>
@@ -266,7 +288,7 @@ function migrate(s){
   if('autoRate' in s.trip===false)s.trip.autoRate=true;
   if('dark' in s){if(s.dark)P.dark=true;delete s.dark}
   s.days.forEach(day=>{day.diary=day.diary||{text:'',ratings:{}};day.diary.ratings=day.diary.ratings||{};day.items=day.items||[];
-    day.items.forEach(i=>{i.dur=i.dur||60;i.zh=i.zh||'';i.addr=i.addr||'';i.ll=i.ll||'';i.book=i.book||'';i.outdoor=!!i.outdoor})});
+    day.items.forEach(i=>{i.dur=i.dur||60;i.zh=i.zh||'';i.addr=i.addr||'';i.ll=i.ll||'';i.book=i.book||'';i.outdoor=!!i.outdoor;i.pCap=i.pCap||'';i.pSticker=i.pSticker||'🥟';i.pStyle=i.pStyle||'polaroid';i.pBy=i.pBy||''})});
   s.expenses=(s.expenses||[]).map(e=>({...e,mode:e.mode||'equal',shares:e.shares||{}}));
   s.checklist=s.checklist||[];s.wishlist=(s.wishlist||[]).map(w=>({...w,votes:w.votes||[]}));
   s.foods=s.foods||d.foods;s.notes=s.notes??'';s.updatedAt=s.updatedAt||0;
@@ -275,7 +297,22 @@ function migrate(s){
 let P={me:'',db:'',room:'',dark:false,joined:'',tile:'osm',...loadJ(PKEY,{})};
 let PH=loadJ(PHKEY,{}),W=loadJ(WKEY,null);
 let S=migrate(loadJ(KEY,null));
-const ui={tab:'home',filter:'',dayFilter:'',q:'',expMember:'',expCat:'',phrCat:'',phrQ:'',sim:null,game:'food',payMode:'equal',pending:false,recap:null};
+const ui={tab:'home',filter:'',dayFilter:'',q:'',expMember:'',expCat:'',phrCat:'',phrQ:'',diaryMode:'places',pFilter:'all',sim:null,game:'food',payMode:'equal',pending:false,recap:null};
+
+/* IndexedDB + localStorage Hybrid Photo Store */
+function idbOp(mode,fn){
+  try{
+    const req=indexedDB.open('sh-photos-db',1);
+    req.onupgradeneeded=e=>e.target.result.createObjectStore('kv');
+    req.onsuccess=e=>{try{const tx=e.target.result.transaction('kv',mode);fn(tx.objectStore('kv'))}catch(x){}};
+  }catch(e){}
+}
+function savePH(){
+  idbOp('readwrite',st=>st.put(PH,PHKEY));
+  try{localStorage.setItem(PHKEY,JSON.stringify(PH))}catch(e){}
+  return true;
+}
+idbOp('readonly',st=>{const g=st.get(PHKEY);g.onsuccess=()=>{if(g.result&&Object.keys(g.result).length>=Object.keys(PH).length){PH={...PH,...g.result};safeRender()}}});
 
 /* share links (#d= or #join=) */
 if(location.hash.startsWith('#d=')){
@@ -556,7 +593,7 @@ function navLinks(i){
 }
 
 /* ================= Header ================= */
-const TABS=[['home','🏠 ภาพรวม'],['plan','🗓️ แผนเที่ยว'],['map','🗺️ แผนที่'],['money','💰 ค่าใช้จ่าย'],['check','✅ เช็คลิสต์'],['wish','⭐ ที่อยากไป'],['diary','📸 ไดอารี่'],['fun','🎲 เกม'],['info','📖 ข้อมูล'],['set','⚙️ ตั้งค่า']];
+const TABS=[['home','🏠 ภาพรวม'],['plan','🗓️ แผนเที่ยว'],['map','🗺️ แผนที่'],['money','💰 ค่าใช้จ่าย'],['check','✅ เช็คลิสต์'],['wish','⭐ ที่อยากไป'],['diary','📸 โพลารอยด์ & ไดอารี่'],['fun','🎲 เกม'],['info','📖 ข้อมูล'],['set','⚙️ ตั้งค่า']];
 function renderHeader(){
   const st={on:'🟢 ซิงก์แล้ว',wait:'🟡 กำลังเชื่อมต่อ',err:'🔴 ซิงก์ผิดพลาด',off:'⚪ ซิงก์ออฟไลน์'};
   document.getElementById('hdr').innerHTML=`<div class="row" style="justify-content:space-between;align-items:flex-start;flex-wrap:nowrap"><div><h1>${esc(S.trip.name)}</h1>
@@ -577,7 +614,7 @@ function nowBlock(){
   const nx=its.find(i=>toMin(i.time)>n.min);
   const box=(lab,i,extra)=>`<div class="nowbox"><div class="mute">${lab}</div><div style="font-size:18px;font-weight:600">${catIcon(i.cat)} ${esc(i.time)} ${esc(i.title)}</div>
     ${i.place||i.zh?`<div class="mute">📍 ${esc(i.place)} ${esc(i.zh)}</div>`:''}${i.addr?`<div class="mute">🚇 ${esc(i.addr)}</div>`:''}${extra}
-    <div class="row" style="margin-top:6px"><button class="btn s" onclick="taxi('${d.id}','${i.id}')">🚕 การ์ดแท็กซี่</button>${navLinks(i)}${!i.done?`<button class="btn s ok" onclick="toggleItem('${d.id}','${i.id}')">✓ เสร็จแล้ว</button>`:''}</div></div>`;
+    <div class="row" style="margin-top:6px"><button class="btn s p" onclick="openPlacePhoto('${d.id}','${i.id}')">📸 ${PH['it_'+i.id]?'ดูโพลารอยด์':'เช็คอินรูป'}</button><button class="btn s" onclick="taxi('${d.id}','${i.id}')">🚕 การ์ดแท็กซี่</button>${navLinks(i)}${!i.done?`<button class="btn s ok" onclick="toggleItem('${d.id}','${i.id}')">✓ เสร็จแล้ว</button>`:''}</div></div>`;
   h+=`<div class="card nowcard"><h3>📍 วันที่ ${n.idx+1}: ${esc(d.title)} <span class="mute">· เวลาเซี่ยงไฮ้ ${fromMin(n.min)}</span> ${wxBadge(n.idx)}</h3>`;
   h+=cur?box('🟢 ตอนนี้',cur,`<div class="mute">ถึง ${fromMin(toMin(cur.time)+(+cur.dur||60))}</div>`):'<div class="nowbox">☕ ช่วงว่าง พักผ่อน/เดินเล่นได้</div>';
   if(nx){const left=toMin(nx.time)-n.min;h+=box(`⏭️ ถัดไป · อีก ${left>=60?Math.floor(left/60)+' ชม. ':''}${left%60} นาที`,nx,'')}
@@ -645,14 +682,17 @@ function renderPlan(){
 }
 function itemRow(d,i){
   const bBadge=i.book==='done'?'<span class="badge ok">✅ จองแล้ว</span>':i.book==='need'?'<span class="badge need">🎫 ต้องจอง</span>':'';
+  const ph=PH['it_'+i.id];
   return `<div class="item ${i.done?'done':''}"><input type="checkbox" ${i.done?'checked':''} onchange="toggleItem('${d.id}','${i.id}')">
   <div class="time">${esc(i.time||'--:--')}<small>${i.dur?i.dur+' นาที':''}</small></div>
-  <div class="body" onclick="editItem('${d.id}','${i.id}')"><div class="t"><span>${catIcon(i.cat)} ${esc(i.title)}${i.outdoor?' 🌳':''}</span>${bBadge}</div>
+  ${ph?`<img src="${ph}" class="ithumb" onclick="openPlacePhoto('${d.id}','${i.id}')" title="แตะเพื่อดู/แต่งโพลารอยด์" alt="">`:''}
+  <div class="body" onclick="editItem('${d.id}','${i.id}')"><div class="t"><span>${catIcon(i.cat)} ${esc(i.title)}${i.outdoor?' 🌳':''}${ph?` <span class="badge ok">${esc(i.pSticker||'📸')} เช็คอินแล้ว</span>`:''}</span>${bBadge}</div>
   ${i.place||i.zh?`<div class="m">📍 ${esc(i.place)} <span lang="zh">${esc(i.zh)}</span></div>`:''}
   ${i.addr?`<div class="m">🚇 ${esc(i.addr)}</div>`:''}
+  ${i.pCap?`<div class="m" style="color:var(--red)">💬 "${esc(i.pCap)}"</div>`:''}
   ${i.note?`<div class="m">📝 ${esc(i.note)}</div>`:''}</div>
   <div class="cost">${i.cost?`¥${fmt(i.cost)}<small>฿${fmt(i.cost*S.trip.rate)}</small>`:''}</div>
-  <div class="acts"><button class="btn s" onclick="taxi('${d.id}','${i.id}')" title="การ์ดแท็กซี่">🚕</button>${navLinks(i)}</div></div>`;
+  <div class="acts"><button class="btn s ${ph?'p':''}" onclick="openPlacePhoto('${d.id}','${i.id}')" title="อัปโหลดรูป / แต่งโพลารอยด์สถานที่นี้">📸</button><button class="btn s" onclick="taxi('${d.id}','${i.id}')" title="การ์ดแท็กซี่">🚕</button>${navLinks(i)}</div></div>`;
 }
 const dayOpts=()=>Object.fromEntries(S.days.map((x,k)=>[x.id,`วันที่ ${k+1} – ${x.title}`]));
 function presetSelectHTML(){
@@ -676,7 +716,7 @@ function editItem(dayId,itemId){
     {...it,day:dayId},v=>{
       if(!v.title)return toast('กรุณาใส่ชื่อกิจกรรม'),false;
       if(v.ll&&!pt(v.ll))return toast('รูปแบบพิกัดไม่ถูกต้อง เช่น 31.24, 121.49'),false;
-      const obj={id:it.id||uid(),time:v.time,dur:v.dur||60,title:v.title,cat:v.cat,place:v.place,zh:v.zh,addr:v.addr,ll:v.ll,outdoor:v.outdoor,book:v.book||'',cost:v.cost,note:v.note,done:!!it.done};
+      const obj={id:it.id||uid(),time:v.time,dur:v.dur||60,title:v.title,cat:v.cat,place:v.place,zh:v.zh,addr:v.addr,ll:v.ll,outdoor:v.outdoor,book:v.book||'',cost:v.cost,note:v.note,done:!!it.done,pCap:it.pCap||'',pSticker:it.pSticker||'🥟',pStyle:it.pStyle||'polaroid',pBy:it.pBy||''};
       if(itemId)d.items=d.items.filter(x=>x.id!==itemId);
       dayById(v.day).items.push(obj);commit();toast('บันทึกแล้ว ✓');
     },itemId?()=>{snapForUndo(`ลบ "${it.title}" แล้ว`,()=>{d.items=d.items.filter(x=>x.id!==itemId)})}:null,presetSelectHTML(),dupBtn);
@@ -731,7 +771,9 @@ async function drawMap(){
     if(mapDay!==''&&mapDay!==String(k))return;
     const col=DAYCOL[k%10],line=[];
     sortItems(d.items).forEach((i,n)=>{const p=pt(i.ll);if(!p)return;line.push(p);b.push(p);
-      L.marker(p,{icon:icon(col,n+1)}).addTo(map).bindPopup(`<b>D${k+1} · ${esc(i.time)} ${esc(i.title)}</b><br>${esc(i.zh||i.place)}${i.addr?`<br><small>${esc(i.addr)}</small>`:''}<br><a href="#" onclick="taxi('${d.id}','${i.id}');return false">🚕 การ์ดแท็กซี่</a> · <a href="#" onclick="editItem('${d.id}','${i.id}');return false">✎ แก้ไข</a>`)});
+      const ph=PH['it_'+i.id];
+      const mkIcon=ph?L.divIcon({className:'',html:`<div class="phin" style="background-image:url('${ph}')"><i style="background:${col}">${n+1}</i></div>`,iconSize:[42,42],iconAnchor:[21,21]}):icon(col,n+1);
+      L.marker(p,{icon:mkIcon}).addTo(map).bindPopup(`${ph?`<img src="${ph}" style="width:160px;height:120px;object-fit:cover;border-radius:8px;display:block;margin-bottom:6px">`:''}<b>D${k+1} · ${esc(i.time)} ${esc(i.title)}</b><br>${esc(i.zh||i.place)}${i.pCap?`<br><span style="color:#c8102e">"${esc(i.pCap)}"</span>`:''}<br><a href="#" onclick="openPlacePhoto('${d.id}','${i.id}');return false">📸 โพลารอยด์</a> · <a href="#" onclick="taxi('${d.id}','${i.id}');return false">🚕 แท็กซี่</a>`)});
     if(line.length>1)L.polyline(line,{color:col,weight:3,opacity:.75,dashArray:'6 6'}).addTo(map);
   });
   const h=pt(S.trip.hotel.ll);if(h){b.push(h);L.marker(h,{icon:icon('#111','🏨')}).addTo(map).bindPopup('🏨 '+esc(S.trip.hotel.name||'โรงแรม')+'<br><a href="#" onclick="taxiHotel();return false">🚕 การ์ดกลับโรงแรม</a>')}
@@ -949,25 +991,436 @@ function wishToPlan(id){
   });
 }
 
-/* ================= Diary & Recap ================= */
-function renderDiary(){
-  return `<p class="mute">📸 รูปเก็บในเครื่องนี้เท่านั้น (ประหยัดเน็ต สูงสุด 6 รูป/วัน) · ข้อความและดาวซิงก์กับเพื่อน</p>`+S.days.map((d,k)=>{
-    const ph=PH[d.id]||[],r=d.diary.ratings,vals=Object.values(r).filter(Boolean),avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;
-    return `<div class="card"><div class="dayhead"><div><span class="dnum" style="background:${DAYCOL[k%10]}">วันที่ ${k+1}</span><b>${esc(d.title)}</b><div class="mute">${thDate(dayDate(k))}</div></div><b style="color:var(--gold);font-size:18px">${avg?'⭐ '+avg.toFixed(1):''}</b></div>
-    <div class="rate">${S.members.map(m=>`<div class="row" style="gap:4px">${chip(m)} ${[1,2,3,4,5].map(n=>`<span class="star ${(r[m.id]||0)>=n?'on':''}" onclick="rate('${d.id}','${m.id}',${n})">★</span>`).join('')}</div>`).join('')}</div>
-    <textarea rows="3" placeholder="วันนี้เป็นยังไงบ้าง ประทับใจอะไร..." oninput="dayById('${d.id}').diary.text=this.value;saveLater()">${esc(d.diary.text)}</textarea>
-    <div class="photos">${ph.map((p,n)=>`<div class="ph"><img src="${p}" onclick="viewPhoto('${d.id}',${n})" alt=""><button onclick="delPhoto('${d.id}',${n})">✕</button></div>`).join('')}
-    ${ph.length<6?`<label class="ph add">＋📷<input type="file" accept="image/*" multiple hidden onchange="addPhotos('${d.id}',this)"></label>`:''}</div></div>`}).join('')
-    +`<div class="card" style="text-align:center"><button class="btn p" style="font-size:17px;padding:10px 22px" onclick="makeRecap()">🎬 สร้างการ์ดสรุปทริป</button><p class="mute">ขนาด 1080×1350 พร้อมโพสต์ IG / โซเชียล</p></div>`;
+/* ================= Diary, Place Polaroids & Recap ================= */
+const STICKERS=['🥟','🐼','🧋','🏮','🏰','🌸','✨','❤️','😎','🍜','🛍️','📸'];
+const FSTYLES={
+  polaroid:'📸 โพลารอยด์น่ารัก',
+  stamp:'📕 พาสปอร์ตตราประทับ',
+  film:'🎞️ ฟิล์มหว่องกาไว',
+  mag:'✨ ปกแมกกาซีน'
+};
+function placeItems(){
+  const list=[];
+  S.days.forEach((d,k)=>sortItems(d.items).forEach(i=>{
+    if(i.cat!=='move'||PH['it_'+i.id])list.push({d,k,i,ph:PH['it_'+i.id]||null});
+  }));
+  return list;
 }
+function renderDiary(){
+  const allP=placeItems(),doneP=allP.filter(x=>x.ph).length,pct=allP.length?Math.round(doneP/allP.length*100):0;
+  const m=ui.diaryMode||'places';
+  let h=`<div class="row noprint" style="margin-bottom:12px">
+    <button class="btn ${m==='places'?'p':''}" onclick="ui.diaryMode='places';renderMain()">📌 โพลารอยด์ตามสถานที่ (${doneP}/${allP.length})</button>
+    <button class="btn ${m==='days'?'p':''}" onclick="ui.diaryMode='days';renderMain()">📖 บันทึกรายวัน & รีวิว</button>
+  </div>`;
+  if(m==='places'){
+    const f=ui.pFilter||'all';
+    const shown=allP.filter(x=>f==='all'?true:f==='done'?!!x.ph:!x.ph);
+    h+=`<div class="card">
+      <div class="dayhead">
+        <div>
+          <h3 style="margin:0">📕 สมุดสะสมโพลารอยด์ & ตราประทับเซี่ยงไฮ้</h3>
+          <div class="mute">เช็คอินรูปถ่ายตามสถานที่จริง แต่งกรอบโพลารอยด์/ตราประทับจีน/ฟิล์มหว่องกาไว พร้อมเซฟลง IG</div>
+        </div>
+        <b style="color:var(--red);font-size:18px">📸 ${doneP}/${allP.length} แห่ง (${pct}%)</b>
+      </div>
+      <div class="bar" style="margin:8px 0 12px"><i style="width:${pct}%;background:linear-gradient(90deg,var(--red),var(--gold))"></i></div>
+      <div class="row">
+        <button class="pill ${f==='all'?'on':''}" onclick="ui.pFilter='all';renderMain()">ทั้งหมด (${allP.length})</button>
+        <button class="pill ${f==='done'?'on':''}" onclick="ui.pFilter='done';renderMain()">📸 มีรูปแล้ว (${doneP})</button>
+        <button class="pill ${f==='todo'?'on':''}" onclick="ui.pFilter='todo';renderMain()">⏳ รอเช็คอิน (${allP.length-doneP})</button>
+        <span style="flex:1"></span>
+        <button class="btn s" onclick="quickAddPlacePhoto()">+ เพิ่มสถานที่ใหม่</button>
+        ${doneP?`<button class="btn s p" onclick="makePolaroidCollage()">🖼️ สร้างโปสเตอร์รวมโพลารอยด์</button>`:''}
+      </div>
+    </div>
+    <div class="pwall">
+      ${shown.map(({d,k,i,ph})=>`<div class="pcard" onclick="openPlacePhoto('${d.id}','${i.id}')">
+        <div class="ptape" style="background:${DAYCOL[k%10]}">D${k+1} · ${esc(i.time||'SHANGHAI')}</div>
+        ${ph?`<div class="pframe">
+          <img src="${ph}" alt="${esc(i.title)}">
+          <div class="psticker">${esc(i.pSticker||'🥟')}</div>
+          <div class="pstamp">上海打卡 ✓</div>
+        </div>`:`<div class="pframe empty">
+          <div style="font-size:32px">${catIcon(i.cat)}</div>
+          <b style="font-size:13px;color:var(--red)">＋📸 อัปโหลดรูป</b>
+          <span style="font-size:11px">แตะเพื่อเช็คอินที่นี่</span>
+        </div>`}
+        <div class="pcap">
+          <div>
+            <div class="pt">${esc(i.title)}</div>
+            ${i.zh?`<div class="pzh" lang="zh">📍 ${esc(i.zh)}</div>`:(i.place?`<div class="pzh">📍 ${esc(i.place)}</div>`:'')}
+            ${i.pCap?`<div class="pnote">"${esc(i.pCap)}"</div>`:''}
+          </div>
+          <div class="row" style="justify-content:space-between;margin-top:6px">
+            <span class="mute" style="font-size:11px">${thDate(dayDate(k))}</span>
+            ${i.pBy&&S.members.some(x=>x.id===i.pBy)?`<span class="chip" style="background:${esc(M(i.pBy).color)};font-size:10px;padding:1px 7px">${esc(M(i.pBy).name)}</span>`:''}
+          </div>
+        </div>
+      </div>`).join('')||'<div class="card mute" style="grid-column:1/-1">ไม่มีสถานที่ในตัวกรองนี้</div>'}
+    </div>`;
+  }else{
+    h+=`<p class="mute">📸 รูปเก็บในเครื่องนี้ (ประหยัดเน็ต สูงสุด 6 รูป/วัน) · ข้อความและดาวซิงก์กับเพื่อน</p>`+S.days.map((d,k)=>{
+      const ph=PH[d.id]||[],r=d.diary.ratings,vals=Object.values(r).filter(Boolean),avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;
+      return `<div class="card"><div class="dayhead"><div><span class="dnum" style="background:${DAYCOL[k%10]}">วันที่ ${k+1}</span><b>${esc(d.title)}</b><div class="mute">${thDate(dayDate(k))}</div></div><b style="color:var(--gold);font-size:18px">${avg?'⭐ '+avg.toFixed(1):''}</b></div>
+      <div class="rate">${S.members.map(m=>`<div class="row" style="gap:4px">${chip(m)} ${[1,2,3,4,5].map(n=>`<span class="star ${(r[m.id]||0)>=n?'on':''}" onclick="rate('${d.id}','${m.id}',${n})">★</span>`).join('')}</div>`).join('')}</div>
+      <textarea rows="3" placeholder="วันนี้เป็นยังไงบ้าง ประทับใจอะไร..." oninput="dayById('${d.id}').diary.text=this.value;saveLater()">${esc(d.diary.text)}</textarea>
+      <div class="photos">${ph.map((p,n)=>`<div class="ph"><img src="${p}" onclick="viewPhoto('${d.id}',${n})" alt=""><button onclick="delPhoto('${d.id}',${n})">✕</button></div>`).join('')}
+      ${ph.length<6?`<label class="ph add">＋📷<input type="file" accept="image/*" multiple hidden onchange="addPhotos('${d.id}',this)"></label>`:''}</div></div>`}).join('');
+  }
+  h+=`<div class="card" style="text-align:center">
+    <div class="row" style="justify-content:center">
+      ${doneP?`<button class="btn p" style="font-size:16px;padding:10px 18px" onclick="makePolaroidCollage()">🖼️ โปสเตอร์รวมโพลารอยด์ (${doneP} แห่ง)</button>`:''}
+      <button class="btn ${doneP?'':'p'}" style="font-size:16px;padding:10px 18px" onclick="makeRecap()">🎬 การ์ดสรุปสถิติทริป</button>
+    </div>
+    <p class="mute" style="margin:6px 0 0">ขนาด 1080×1350 คมชัด พร้อมโพสต์ IG / โซเชียล</p>
+  </div>`;
+  return h;
+}
+function quickAddPlacePhoto(){
+  if(!S.days.length)return toast('เพิ่มวันในแผนก่อน');
+  form('เพิ่มสถานที่เช็คอินรูป',[
+    {k:'day',label:'วัน',type:'select',options:dayOpts()},
+    {k:'title',label:'ชื่อสถานที่ / ร้าน'},
+    {k:'zh',label:'ชื่อภาษาจีน (ถ้ามี)'},
+    {k:'cat',label:'หมวด',type:'select',options:CATS},
+    {k:'ll',label:'พิกัด (ถ้ามี)',type:'ll'}
+  ],{day:S.days[0].id,title:'',zh:'',cat:'sight',ll:''},v=>{
+    if(!v.title)return toast('กรุณาใส่ชื่อสถานที่'),false;
+    const it={id:uid(),time:'12:00',dur:60,title:v.title,cat:v.cat,place:v.title,zh:v.zh,addr:'',ll:v.ll,outdoor:true,book:'',cost:0,note:'',done:true,pCap:'',pSticker:'🥟',pStyle:'polaroid',pBy:P.me||''};
+    dayById(v.day).items.push(it);commit();
+    setTimeout(()=>openPlacePhoto(v.day,it.id),120);
+  },null,presetSelectHTML());
+}
+
+/* Place Photo Polaroid & Stamp Studio */
+let curStudio=null;
+function openPlacePhoto(dId,iId){
+  const d=dayById(dId),k=S.days.findIndex(x=>x.id===dId),i=d?.items.find(x=>x.id===iId);
+  if(!d||!i)return;
+  curStudio={dId,iId,k};
+  const ph=PH['it_'+i.id];
+  i.pStyle=i.pStyle||'polaroid';
+  i.pSticker=i.pSticker||'🥟';
+  modalHTML(`<h3>📸 โพลารอยด์เช็คอิน: ${esc(i.title)}</h3>
+    <div style="text-align:center;margin-bottom:10px">
+      <canvas id="pCanvas" width="800" height="1000" style="width:100%;max-width:340px;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.22);display:block;margin:0 auto"></canvas>
+      <div class="row" style="justify-content:center;margin-top:10px">
+        <label class="btn p">📷 ${ph?'เปลี่ยนรูปถ่าย':'เลือกรูป / ถ่ายรูปเช็คอิน'}<input type="file" accept="image/*" hidden onchange="uploadPlaceImg(this)"></label>
+        ${ph?`<button class="btn ok" onclick="downloadPlaceCard()">⬇️ บันทึกภาพ</button>${navigator.canShare?`<button class="btn" onclick="sharePlaceCard()">📤 แชร์</button>`:''}<button class="btn danger s" onclick="delPlacePhoto()">🗑</button>`:''}
+      </div>
+    </div>
+    <div class="fld"><span>🎨 สไตล์กรอบ</span>
+      <div class="row">${Object.entries(FSTYLES).map(([stKey,stLab])=>`<button type="button" class="pill ${i.pStyle===stKey?'on':''}" onclick="setPlaceMeta('pStyle','${stKey}')">${stLab}</button>`).join('')}</div>
+    </div>
+    <div class="fld"><span>✨ สติกเกอร์ตกแต่ง</span>
+      <div class="row" style="gap:6px">${STICKERS.map(st=>`<span class="stpick ${i.pSticker===st?'on':''}" onclick="setPlaceMeta('pSticker','${st}')">${st}</span>`).join('')}</div>
+    </div>
+    <div class="fld"><span>💬 แคปชันใต้ภาพ (ซิงก์กับเพื่อน)</span>
+      <input id="pCapInp" value="${esc(i.pCap||'')}" placeholder="เช่น เสี่ยวหลงเปาฉ่ำมาก! / วิวไฟสวยสุดๆ ✨" oninput="setPlaceMeta('pCap',this.value,true)">
+    </div>
+    <div class="fld"><span>🙋 เช็คอินโดย</span>
+      <div class="row">${S.members.map(m=>`<span class="chip ${(i.pBy||P.me)===m.id?'':'off'}" style="background:${esc(m.color)};cursor:pointer" onclick="setPlaceMeta('pBy','${m.id}')">${esc(m.name)}</span>`).join('')}</div>
+    </div>
+    <div class="row" style="justify-content:flex-end;margin-top:12px">
+      <button class="btn p" onclick="closeModal();render()">เสร็จสิ้น ✓</button>
+    </div>`);
+  drawPlaceCard();
+}
+function setPlaceMeta(key,val,fromInput=false){
+  if(!curStudio)return;
+  const d=dayById(curStudio.dId),i=d?.items.find(x=>x.id===curStudio.iId);if(!i)return;
+  i[key]=val;
+  if(!fromInput){
+    saveLater();
+    openPlacePhoto(curStudio.dId,curStudio.iId);
+  }else{
+    saveLater();
+    drawPlaceCard();
+  }
+}
+async function uploadPlaceImg(inp){
+  const f=inp.files[0];inp.value='';if(!f||!curStudio)return;
+  toast('✨ กำลังย่อและแต่งรูปโพลารอยด์...');
+  try{
+    const data=await compress(f,960,.72);
+    const d=dayById(curStudio.dId),i=d?.items.find(x=>x.id===curStudio.iId);
+    if(i){
+      PH['it_'+i.id]=data;
+      i.done=true;
+      if(!i.pBy&&P.me)i.pBy=P.me;
+      savePH();touch();
+      openPlacePhoto(curStudio.dId,curStudio.iId);
+      toast('📸 เช็คอินรูปสถานที่เรียบร้อย!');
+    }
+  }catch(e){toast('ไม่สามารถโหลดรูปนี้ได้')}
+}
+function delPlacePhoto(){
+  if(!curStudio||!confirm('ลบรูปเช็คอินของสถานที่นี้?'))return;
+  const {dId,iId}=curStudio;
+  delete PH['it_'+iId];savePH();
+  openPlacePhoto(dId,iId);
+  toast('ลบรูปแล้ว');
+}
+function drawCoverImg(x,img,X,Y,W,H,r=0){
+  x.save();
+  if(r){x.beginPath();if(x.roundRect)x.roundRect(X,Y,W,H,r);else x.rect(X,Y,W,H);x.clip()}
+  const s=Math.max(W/img.width,H/img.height),dw=img.width*s,dh=img.height*s;
+  x.drawImage(img,X+(W-dw)/2,Y+(H-dh)/2,dw,dh);
+  x.restore();
+}
+async function drawPlaceCard(){
+  if(!curStudio)return;
+  const c=document.getElementById('pCanvas');if(!c)return;
+  const d=dayById(curStudio.dId),k=curStudio.k,i=d?.items.find(x=>x.id===curStudio.iId);if(!i)return;
+  const x=c.getContext('2d'),CW=800,CH=1000;
+  try{await document.fonts.load('700 42px Prompt');await document.fonts.load('400 26px Prompt')}catch(e){}
+  const F=(w,s)=>`${w} ${s}px Prompt, system-ui, sans-serif`;
+  const ph=PH['it_'+i.id];
+  let img=null;if(ph){try{img=await loadImg(ph)}catch(e){}}
+  const dateStr=thDate(dayDate(k)),col=DAYCOL[k%10],st=i.pSticker||'🥟',style=i.pStyle||'polaroid';
+  const who=i.pBy?M(i.pBy):null;
+  x.clearRect(0,0,CW,CH);
+
+  if(style==='polaroid'){
+    // Background desk
+    const bg=x.createLinearGradient(0,0,CW,CH);bg.addColorStop(0,'#f6efe6');bg.addColorStop(1,'#e9dec9');
+    x.fillStyle=bg;x.fillRect(0,0,CW,CH);
+    // Soft shadow + White Polaroid card
+    x.save();x.shadowColor='rgba(0,0,0,.18)';x.shadowBlur=28;x.shadowOffsetY=12;
+    x.fillStyle='#fffdf9';rr(x,44,48,712,904,24);x.restore();
+    // Washi tape at top
+    x.save();x.translate(400,48);x.rotate(-0.03);
+    x.fillStyle=col;x.globalAlpha=.9;rr(x,-130,-20,260,42,6);
+    x.globalAlpha=1;x.fillStyle='#fff';x.font=F(700,20);x.textAlign='center';
+    x.fillText(`DAY ${k+1} · ${i.time||'SHANGHAI'}`,0,8);x.restore();
+    // Photo box
+    const px=84,py=96,pw=632,phh=610;
+    if(img)drawCoverImg(x,img,px,py,pw,phh,14);
+    else{
+      x.fillStyle='#f3efe8';rr(x,px,py,pw,phh,14);
+      x.fillStyle='#9ca3af';x.font=F(600,32);x.textAlign='center';
+      x.fillText(`${catIcon(i.cat)} กดปุ่ม "เลือกรูป" ด้านล่าง`,400,390);
+      x.font=F(400,24);x.fillText('เพื่อสร้างโพลารอยด์เช็คอินสถานที่นี้',400,435);
+    }
+    // Sticker
+    x.font='74px sans-serif';x.textAlign='left';x.fillText(st,px+16,py+78);
+    // Red Chinese Stamp
+    x.save();x.translate(615,695);x.rotate(-0.16);
+    x.fillStyle='rgba(255,252,245,.92)';rr(x,-95,-34,190,68,10);
+    x.strokeStyle='#c8102e';x.lineWidth=4;x.strokeRect(-90,-29,180,58);
+    x.fillStyle='#c8102e';x.font=F(700,24);x.textAlign='center';x.fillText('上海打卡 ✓',0,-2);
+    x.font=F(600,14);x.fillText('SHANGHAI CHECK-IN',0,19);
+    x.restore();
+    // Caption & Place Info
+    x.textAlign='left';x.fillStyle='#1f2328';x.font=F(700,36);
+    wrapText(x,i.title,88,762,620,44,1);
+    if(i.zh||i.place){
+      x.fillStyle='#c8102e';x.font=F(600,26);
+      wrapText(x,`📍 ${i.zh||''} ${i.place&&i.zh?'· '+i.place:(i.place||'')}`,88,804,620,34,1);
+    }
+    if(i.pCap){
+      x.fillStyle='#374151';x.font=F(500,26);
+      wrapText(x,`"${i.pCap}"`,88,852,620,34,2);
+    }
+    x.fillStyle='#6b7280';x.font=F(400,21);
+    x.fillText(`📅 ${dateStr} · ${S.trip.name}`,88,922);
+    if(who&&who.name!=='?'){
+      x.textAlign='right';x.fillStyle=who.color;x.font=F(600,21);
+      x.fillText(`📸 ${who.name}`,710,922);
+    }
+  }else if(style==='stamp'){
+    // Passport Vintage Page
+    x.fillStyle='#f4ecdc';x.fillRect(0,0,CW,CH);
+    x.strokeStyle='rgba(180,150,110,.22)';x.lineWidth=1;
+    for(let y=40;y<CH;y+=40){x.beginPath();x.moveTo(0,y);x.lineTo(CW,y);x.stroke()}
+    x.strokeStyle='#c8102e';x.lineWidth=4;x.strokeRect(32,32,CW-64,CH-64);
+    x.strokeStyle='#d4a017';x.lineWidth=1.5;x.strokeRect(42,42,CW-84,CH-84);
+    // Header
+    x.textAlign='center';x.fillStyle='#8b0a1f';x.font=F(700,26);
+    x.fillText('🛂 SHANGHAI TRAVEL PASSPORT · 上海旅游纪念护照',400,90);
+    // Photo with white border
+    x.save();x.shadowColor='rgba(0,0,0,.16)';x.shadowBlur=18;
+    x.fillStyle='#fff';rr(x,76,118,648,540,12);x.restore();
+    if(img)drawCoverImg(x,img,92,134,616,508,8);
+    else{
+      x.fillStyle='#ebe3d5';rr(x,92,134,616,508,8);
+      x.fillStyle='#8b0a1f';x.font=F(600,30);x.fillText('📷 อัปโหลดรูปเพื่อประทับตราพาสปอร์ต',400,395);
+    }
+    x.font='68px sans-serif';x.textAlign='left';x.fillText(st,108,205);
+    // Big Circular Red Passport Stamp
+    x.save();x.translate(610,775);x.rotate(-0.2);
+    x.strokeStyle='rgba(200,16,46,.85)';x.fillStyle='rgba(200,16,46,.85)';
+    x.lineWidth=5;x.beginPath();x.arc(0,0,105,0,Math.PI*2);x.stroke();
+    x.lineWidth=2;x.beginPath();x.arc(0,0,95,0,Math.PI*2);x.stroke();
+    x.font=F(700,22);x.textAlign='center';x.fillText('★ 上海 · SHANGHAI ★',0,-52);
+    x.font=F(700,34);x.fillText((i.zh||'上海打卡').slice(0,5),0,2);
+    x.font=F(600,18);x.fillText('APPROVED · 打卡成功',0,36);
+    x.font=F(600,16);x.fillText(iso(dayDate(k)),0,64);
+    x.restore();
+    // Place text on left
+    x.textAlign='left';x.fillStyle='#1f2328';x.font=F(700,38);
+    wrapText(x,i.title,76,725,410,46,2);
+    if(i.zh){x.fillStyle='#8b0a1f';x.font=F(700,30);x.fillText(`印章: ${i.zh}`,76,818)}
+    if(i.pCap){x.fillStyle='#4b5563';x.font=F(500,25);wrapText(x,`"${i.pCap}"`,76,865,420,34,2)}
+    x.fillStyle='#78716c';x.font=F(600,20);
+    x.fillText(`ENTRY: DAY ${k+1} (${dateStr})${who&&who.name!=='?'?' · BY '+who.name:''}`,76,936);
+  }else if(style==='film'){
+    // Cinema 35mm Film Look
+    x.fillStyle='#0f1012';x.fillRect(0,0,CW,CH);
+    // Sprocket holes left & right
+    x.fillStyle='#2a2d32';
+    for(let y=30;y<CH;y+=64){rr(x,18,y,28,38,5);rr(x,CW-46,y,28,38,5)}
+    // Film edge text
+    x.save();x.fillStyle='#f59e0b';x.font='700 16px monospace';
+    x.fillText(`SHANGHAI 400 · FRAME ${k+1}A`,72,44);
+    x.textAlign='right';x.fillText(`▶ ${i.time||'00:00'} · EASTMAN`,CW-72,44);x.restore();
+    // Main frame
+    const fx=72,fy=64,fw=CW-144,fh=720;
+    if(img)drawCoverImg(x,img,fx,fy,fw,fh,4);
+    else{
+      x.fillStyle='#1c1f24';rr(x,fx,fy,fw,fh,4);
+      x.fillStyle='#f59e0b';x.font=F(600,30);x.textAlign='center';x.fillText('🎞️ เลือกรูปเพื่อสร้างฟิล์มภาพยนตร์เซี่ยงไฮ้',400,420);
+    }
+    // Retro Orange Timestamp on photo
+    x.fillStyle='#ff7b00';x.font='700 24px monospace';x.textAlign='right';
+    x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=6;
+    x.fillText(`'${iso(dayDate(k)).slice(2).replace(/-/g,' ')}  ${st}`,fx+fw-22,fy+fh-24);
+    // Wong Kar-wai Yellow Subtitles
+    x.textAlign='center';
+    if(i.pCap){
+      x.fillStyle='#fde047';x.font=F(600,28);
+      wrapText(x,`"${i.pCap}"`,400,fy+fh-70,fw-60,36,1);
+    }
+    x.shadowBlur=0;
+    // Bottom Cinema Credits
+    x.fillStyle='#fff';x.font=F(700,36);x.fillText(i.zh?`${i.zh} · ${i.title}`:i.title,400,850);
+    x.fillStyle='#9ca3af';x.font=F(400,23);
+    x.fillText(`📍 ${i.place||'Shanghai, China'} · ${dateStr}${who&&who.name!=='?'?' · 🎥 '+who.name:''}`,400,895);
+    x.fillStyle='#f59e0b';x.font=F(600,19);
+    x.fillText(`★ ${S.trip.name.toUpperCase()} · DIRECTED IN SHANGHAI ★`,400,945);
+  }else{
+    // Magazine Cover (mag)
+    if(img)drawCoverImg(x,img,0,0,CW,CH,0);
+    else{
+      const g=x.createLinearGradient(0,0,CW,CH);g.addColorStop(0,'#8b0a1f');g.addColorStop(1,'#1f2328');
+      x.fillStyle=g;x.fillRect(0,0,CW,CH);
+      x.fillStyle='#fff';x.font=F(600,30);x.textAlign='center';x.fillText('✨ เลือกรูปเพื่อทำปกแมกกาซีนเซี่ยงไฮ้',400,480);
+    }
+    // Top & bottom gradient overlays
+    const gt=x.createLinearGradient(0,0,0,280);gt.addColorStop(0,'rgba(0,0,0,.72)');gt.addColorStop(1,'rgba(0,0,0,0)');
+    x.fillStyle=gt;x.fillRect(0,0,CW,280);
+    const gb=x.createLinearGradient(0,CH-380,0,CH);gb.addColorStop(0,'rgba(0,0,0,0)');gb.addColorStop(1,'rgba(0,0,0,.86)');
+    x.fillStyle=gb;x.fillRect(0,CH-380,CW,380);
+    // Masthead
+    x.textAlign='left';x.fillStyle='#fff';x.font=F(700,84);x.fillText('SHANGHAI',48,112);
+    x.fillStyle='#ffd166';x.font=F(700,46);x.textAlign='right';x.fillText(i.zh||'上海',CW-48,106);
+    x.textAlign='left';x.fillStyle='rgba(255,255,255,.88)';x.font=F(500,22);
+    x.fillText(`ISSUE D${k+1} · ${dateStr.toUpperCase()} · ${S.trip.name}`,52,152);
+    // Bottom editorial block
+    x.fillStyle=col;rr(x,48,CH-260,210,44,22);
+    x.fillStyle='#fff';x.font=F(700,21);x.fillText(`${st} CHECKED IN ✓`,68,CH-231);
+    x.fillStyle='#fff';x.font=F(700,46);
+    let my=wrapText(x,i.title,48,CH-165,704,54,2);
+    if(i.pCap){
+      x.fillStyle='#ffd166';x.font=F(500,28);
+      wrapText(x,`"${i.pCap}"`,48,my+4,704,36,2);
+    }
+    x.fillStyle='rgba(255,255,255,.75)';x.font=F(400,20);
+    x.fillText(`📍 ${i.place||i.zh||'Shanghai'}${who&&who.name!=='?'?' · 📸 Photographed by '+who.name:''}`,48,CH-38);
+  }
+}
+function downloadPlaceCard(){
+  const c=document.getElementById('pCanvas');if(!c||!curStudio)return;
+  const d=dayById(curStudio.dId),i=d?.items.find(x=>x.id===curStudio.iId);
+  const a=document.createElement('a');
+  a.href=c.toDataURL('image/png');
+  a.download=`shanghai-${(i?.place||i?.title||'checkin').replace(/[^a-zA-Z0-9ก-๙]+/g,'-').toLowerCase()}.png`;
+  a.click();toast('ดาวน์โหลดการ์ดโพลารอยด์แล้ว ⬇️');
+}
+function sharePlaceCard(){
+  const c=document.getElementById('pCanvas');if(!c)return;
+  c.toBlob(b=>{
+    const f=new File([b],'shanghai-polaroid.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[f]}))navigator.share({files:[f],title:S.trip.name}).catch(()=>{});
+    else downloadPlaceCard();
+  });
+}
+
+/* Generate Polaroid Scrapbook Collage Poster of all checked-in places */
+async function makePolaroidCollage(){
+  const list=placeItems().filter(x=>x.ph);
+  if(!list.length)return toast('อัปโหลดรูปตามสถานที่อย่างน้อย 1 แห่งก่อนนะ 📸');
+  toast('🖼️ กำลังจัดบอร์ดโพลารอยด์รวมทั้งทริป...');
+  try{await document.fonts.load('700 54px Prompt');await document.fonts.load('400 24px Prompt')}catch(e){}
+  const F=(w,s)=>`${w} ${s}px Prompt, system-ui, sans-serif`;
+  const cols=list.length<=4?2:3;
+  const rows=Math.ceil(list.length/cols);
+  const CW=1080,cardW=cols===2?440:300,cardH=cols===2?530:380,gapX=cols===2?50:36,gapY=42;
+  const topH=220,botH=110;
+  const CH=Math.max(1350,topH+rows*(cardH+gapY)+botH);
+  const c=document.createElement('canvas');c.width=CW;c.height=CH;const x=c.getContext('2d');
+  // Warm Scrapbook Background
+  const g=x.createLinearGradient(0,0,CW,CH);g.addColorStop(0,'#8b0a1f');g.addColorStop(0.5,'#b8142c');g.addColorStop(1,'#4a0b15');
+  x.fillStyle=g;x.fillRect(0,0,CW,CH);
+  // Decorative dots
+  x.fillStyle='rgba(255,255,255,.06)';
+  for(let py=40;py<CH;py+=60)for(let px=40;px<CW;px+=60){x.beginPath();x.arc(px,py,3,0,Math.PI*2);x.fill()}
+  // Header
+  x.textAlign='center';x.fillStyle='#ffd166';x.font=F(700,28);
+  x.fillText('上海打卡 · SHANGHAI POLAROID PASSPORT',CW/2,72);
+  x.fillStyle='#fff';x.font=F(700,56);
+  x.fillText(S.trip.name,CW/2,135);
+  x.fillStyle='rgba(255,255,255,.85)';x.font=F(400,26);
+  x.fillText(`📅 ${thDate(dayDate(0))} – ${thDate(dayDate(Math.max(0,S.days.length-1)))} · เช็คอิน ${list.length} สถานที่`,CW/2,178);
+
+  const startX=(CW-(cols*cardW+(cols-1)*gapX))/2;
+  for(let idx=0;idx<list.length;idx++){
+    const {k,i,ph}=list[idx];
+    const r=Math.floor(idx/cols),cl=idx%cols;
+    const cx=startX+cl*(cardW+gapX)+cardW/2,cy=topH+r*(cardH+gapY)+cardH/2;
+    const ang=(idx%2===0?-1:1)*(0.025+(idx%3)*0.008);
+    x.save();x.translate(cx,cy);x.rotate(ang);
+    x.shadowColor='rgba(0,0,0,.35)';x.shadowBlur=22;x.shadowOffsetY=10;
+    x.fillStyle='#fffdf9';rr(x,-cardW/2,-cardH/2,cardW,cardH,16);
+    x.shadowBlur=0;x.shadowOffsetY=0;
+    // Washi tape
+    x.fillStyle=DAYCOL[k%10];rr(x,-65,-cardH/2-10,130,26,4);
+    x.fillStyle='#fff';x.font=F(700,14);x.textAlign='center';x.fillText(`DAY ${k+1}`,0,-cardH/2+8);
+    // Photo
+    const pad=cols===2?22:16,pw=cardW-pad*2,phh=pw;
+    try{const img=await loadImg(ph);drawCoverImg(x,img,-cardW/2+pad,-cardH/2+pad+8,pw,phh,10)}catch(e){}
+    // Sticker & Stamp
+    x.font=(cols===2?'46px':'34px')+' sans-serif';x.textAlign='left';
+    x.fillText(i.pSticker||'🥟',-cardW/2+pad+8,-cardH/2+pad+50);
+    // Text below photo
+    const ty=-cardH/2+pad+phh+(cols===2?42:32);
+    x.fillStyle='#1f2328';x.font=F(700,cols===2?24:18);
+    wrapText(x,i.title,-cardW/2+pad,ty,pw,cols===2?28:22,1);
+    if(i.zh||i.place){
+      x.fillStyle='#c8102e';x.font=F(600,cols===2?19:15);
+      wrapText(x,`📍 ${i.zh||i.place}`,-cardW/2+pad,ty+(cols===2?28:21),pw,22,1);
+    }
+    if(i.pCap){
+      x.fillStyle='#6b7280';x.font=F(400,cols===2?17:13);
+      wrapText(x,`"${i.pCap}"`,-cardW/2+pad,ty+(cols===2?54:40),pw,20,1);
+    }
+    x.restore();
+  }
+  x.textAlign='center';x.fillStyle='rgba(255,255,255,.7)';x.font=F(500,22);
+  x.fillText(`Made with Shanghai Trip Planner · ${S.members.map(m=>m.name).join(' · ')}`,CW/2,CH-40);
+  ui.recap=c;const url=c.toDataURL('image/png');
+  modalHTML(`<img src="${url}" style="width:100%;border-radius:12px;display:block" alt="โปสเตอร์โพลารอยด์"><div class="row" style="justify-content:center;margin-top:12px"><a class="btn p" download="shanghai-polaroid-wall.png" href="${url}">⬇️ บันทึกโปสเตอร์</a>${navigator.canShare?'<button class="btn" onclick="shareRecap()">📤 แชร์</button>':''}<button class="btn" onclick="closeModal()">ปิด</button></div>`);
+}
+
 function rate(dId,mid,n){const r=dayById(dId).diary.ratings;r[mid]=r[mid]===n?0:n;commit()}
-function compress(file,max=900,q=.6){return new Promise((res,rej)=>{const img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{const s=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=img.width*s|0;c.height=img.height*s|0;c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',q))};img.onerror=rej;img.src=url})}
+function compress(file,max=900,q=.65){return new Promise((res,rej)=>{const img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{const s=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=img.width*s|0;c.height=img.height*s|0;c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',q))};img.onerror=rej;img.src=url})}
 async function addPhotos(dId,inp){
   const fs=[...inp.files];inp.value='';PH[dId]=PH[dId]||[];toast('กำลังเพิ่มรูป...');
   for(const f of fs){if(PH[dId].length>=6)break;try{PH[dId].push(await compress(f))}catch(e){}}
-  while(!saveJ(PHKEY,PH)&&PH[dId].length)PH[dId].pop();renderMain();
+  savePH();renderMain();
 }
-function delPhoto(dId,n){if(!confirm('ลบรูปนี้?'))return;PH[dId].splice(n,1);saveJ(PHKEY,PH);renderMain()}
+function delPhoto(dId,n){if(!confirm('ลบรูปนี้?'))return;PH[dId].splice(n,1);savePH();renderMain()}
 function viewPhoto(dId,n){modalHTML(`<img src="${PH[dId][n]}" style="width:100%;border-radius:12px;display:block" onclick="closeModal()" alt="">`)}
 function loadImg(src){return new Promise((r,j)=>{const i=new Image();i.onload=()=>r(i);i.onerror=j;i.src=src})}
 function graphemes(t){try{return [...new Intl.Segmenter('th',{granularity:'grapheme'}).segment(t)].map(s=>s.segment)}catch(e){return Array.from(t)}}
@@ -987,7 +1440,8 @@ async function makeRecap(){
   try{await document.fonts.load('700 60px Prompt');await document.fonts.load('400 30px Prompt')}catch(e){}
   const F=(w,s)=>`${w} ${s}px Prompt, sans-serif`;
   const g=x.createLinearGradient(0,0,W1,H1);g.addColorStop(0,'#8b0a1f');g.addColorStop(1,'#e0452f');x.fillStyle=g;x.fillRect(0,0,W1,H1);
-  const photos=S.days.flatMap(d=>PH[d.id]||[]);
+  const placePhs=placeItems().map(p=>p.ph).filter(Boolean);
+  const photos=[...placePhs,...S.days.flatMap(d=>PH[d.id]||[])];
   if(photos.length){try{const img=await loadImg(photos[0]),s=Math.max(W1/img.width,H1/img.height);x.drawImage(img,(W1-img.width*s)/2,(H1-img.height*s)/2,img.width*s,img.height*s);x.fillStyle='rgba(25,0,8,.62)';x.fillRect(0,0,W1,H1)}catch(e){}}
   x.textAlign='left';x.fillStyle='#ffd166';x.font=F(600,32);x.fillText('上海 · SHANGHAI TRIP RECAP',70,110);
   x.fillStyle='#fff';x.font=F(700,68);let y=wrapText(x,S.trip.name,70,200,940,80);
@@ -1178,7 +1632,7 @@ function exportJSON(){const a=document.createElement('a');a.href=URL.createObjec
 function importJSON(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.days||!d.members)throw 0;if(confirm('นำเข้าและแทนที่ข้อมูลปัจจุบัน?')){S=migrate(d);commit();toast('นำเข้าสำเร็จ ✓')}}catch(e){alert('ไฟล์ไม่ถูกต้อง')}};r.readAsText(f)}
 function shareLink(){copyText(location.href.split('#')[0]+'#d='+toB64(JSON.stringify(S)),'คัดลอกลิงก์แล้ว 🔗')}
-function resetAll(){if(confirm('รีเซ็ตกลับเป็นแผนตัวอย่าง? ข้อมูลและรูปทั้งหมดจะหายไป')){S=defaults();PH={};saveJ(PHKEY,PH);commit();go('home')}}
+function resetAll(){if(confirm('รีเซ็ตกลับเป็นแผนตัวอย่าง? ข้อมูลและรูปทั้งหมดจะหายไป')){S=defaults();PH={};savePH();commit();go('home')}}
 
 /* Generate PNG Apple Touch Icon for iOS Homescreen */
 function genAppleIcon(){
