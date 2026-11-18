@@ -1,4 +1,4 @@
-const C='sh-trip-v3';
+const C='sh-trip-v3.2';
 const CORE=['./','./index.html','./manifest.json','./icon.svg'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(C).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()));

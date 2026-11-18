@@ -130,6 +130,9 @@ body.dark .pcap .pzh{color:#ff7b8b}
 .stpick.on{border:2px solid var(--red);background:rgba(200,16,46,.1);transform:scale(1.1)}
 @media(max-width:600px){.time{width:46px}h1{font-size:20px}.hero b{font-size:32px}.big2{font-size:32px}main{padding:12px}.card{padding:14px}.pwall{grid-template-columns:repeat(2,1fr);gap:12px}}
 @media print{header,.navwrap,.btn,.acts,.noprint,.fab,input[type=checkbox]{display:none!important}body{background:#fff;color:#000}.card{break-inside:avoid;border-color:#ccc;box-shadow:none}}
+.langsw{display:inline-flex;gap:2px;align-items:center;margin-bottom:4px;background:rgba(255,255,255,.16);border-radius:99px;padding:2px 4px;font-size:12px}
+.langsw button{background:transparent;border:0;color:#fff;font:inherit;padding:1px 9px;border-radius:99px;cursor:pointer;opacity:.85}
+.langsw button.on{background:#fff;color:#8b0a1f;font-weight:700;opacity:1}
 </style>
 </head>
 <body>
@@ -141,18 +144,337 @@ body.dark .pcap .pzh{color:#ff7b8b}
 <div id="toast"></div>
 
 <script>
+/* rows: [th, en, zh, exactOnly?]  — longest keys are matched first; exactOnly rows only match a whole text node */
+const I18N_ROWS=[
+/* ---- tabs / labels (exact) ---- */
+['ภาพรวม','Overview','总览',1],['แผนเที่ยว','Itinerary','行程',1],['แผนที่','Map','地图',1],['ค่าใช้จ่าย','Expenses','费用',1],
+['เช็คลิสต์','Checklist','清单',1],['ที่อยากไป','Wishlist','想去',1],['โพลารอยด์ & ไดอารี่','Polaroid & Diary','拍立得与日记',1],
+['เกม','Games','游戏',1],['ข้อมูล','Info','资料',1],['ตั้งค่า','Settings','设置',1],['การ์ดด่วน','Quick Card','快捷卡片',1],
+['เที่ยวชม','Sightseeing','观光',1],['กิน','Food','美食',1],['ช้อป','Shopping','购物',1],['เดินทาง','Transport','交通',1],
+['ที่พัก','Hotel','住宿',1],['อื่นๆ','Other','其他',1],['อาหาร','Food','餐饮',1],['ค่าเข้า','Tickets','门票',1],['ช้อปปิ้ง','Shopping','购物',1],
+['ไม่ต้องจอง','No booking needed','无需预订',1],['ต้องจองล่วงหน้า','Book in advance','需提前预订',1],['จองแล้ว','Booked','已预订',1],['ต้องจอง','Booking needed','需预订',1],
+['วัน','Day','天',1],['วันที่','Date','日期',1],['เวลา','Time','时间',1],['รายการ','Description','项目',1],['ชื่อ','Name','姓名',1],
+['จ่ายไป','Paid','已付',1],['ส่วนของตัวเอง','Own share','个人份额',1],['สุทธิ','Net','净额',1],['ทั้งหมด','All','全部',1],
+['สถานที่','Place','地点',1],['โรงแรม','Hotel','酒店',1],['กิจกรรม','Activities','活动',1],['คน','people','人',1],['ปิด','Close','关闭',1],
+['ยกเลิก','Cancel','取消',1],['บันทึก','Save','保存',1],['เชื่อมต่อ','Connect','连接',1],['เพิ่ม','Add','添加',1],['ว่าง','Empty','空',1],
+['แชร์','Share','分享',1],['ลบ','Delete','删除',1],['พิมพ์','Print','打印',1],['สุ่ม','Random','随机',1],['หาร','Split','分摊',1],
+['ถึง','until','至',1],['อีก','Only','仅剩',1],['น.','min','分',1],['ที่','places','处',1],['แห่ง','places','处',1],
+['เริ่ม','Start','开始',1],['แท็กซี่','Taxi','出租车',1],['สถานะ','Status','状态',1],['ออฟไลน์','Offline','离线',1],
+['รูป','photos','张照片',1],['ความทรงจำ','Memories','回忆',1],['ระยะเวลาทริป','Trip length','行程天数',1],['ใช้จ่ายรวม','Total spent','总花费',1],
+['ในแผนเที่ยว','In the plan','计划中',1],['เที่ยวไปแล้ว','Visited','已游览',1],['เช็คอินแล้ว','Checked in','已打卡',1],
+
+/* ---- misc fragments ---- */
+['ซิงก์ออฟไลน์','Sync offline','同步离线'],['ซิงก์ผิดพลาด (เช็ค URL/กฎ)','Sync error (check URL/rules)','同步出错（检查网址/规则）'],
+['ซิงก์ผิดพลาด','Sync error','同步出错'],['ซิงก์แล้ว','Synced','已同步'],['กำลังเชื่อมต่อ...','Connecting...','连接中...'],['กำลังเชื่อมต่อ','Connecting','连接中'],
+['เชื่อมต่อแล้ว','Connected','已连接'],['ไม่ได้เชื่อมต่อ','Not connected','未连接'],['ผิดพลาด: เช็ค URL และกฎ (Rules)','Error: check URL and Rules','出错：请检查网址和规则'],
+['แตะเพื่อซิงก์ทันที','Tap to sync now','点击立即同步'],['แตะเพื่อเลือกฉันคือ','Tap to set me as','点击设为我是'],['(ฉัน)','(me)','（我）'],
+[' วัน',' days',' 天'],['📴 ออฟไลน์','📴 Offline','📴 离线'],['เลิกทำ','Undo','撤销'],['กู้คืนข้อมูลแล้ว','Restored','已恢复'],
+['พื้นที่เก็บข้อมูลในเครื่องเต็ม','Device storage is full','设备存储空间已满'],
+
+/* ---- home ---- */
+['คุณคือใครในทริปนี้?','Who are you on this trip?','你是旅行中的哪位？'],
+['แตะชื่อตัวเองเพื่อตั้งเป็นคนจ่ายเริ่มต้นและแสดงสถานะออนไลน์','Tap your name to set it as the default payer and show your online status','点击你的名字，设为默认付款人并显示在线状态'],
+['วันจะได้ไปเซี่ยงไฮ้!',' days until Shanghai!',' 天就能去上海了！'],['กำลังเที่ยว วันที่ ','Travelling · Day ','旅行中 · 第 '],
+['ทริปจบแล้ว หวังว่าจะประทับใจนะ','The trip is over — hope you loved it','旅程结束了，希望你留下美好回忆'],
+['แผนมีข้อควรระวัง ','Plan has ','行程有 '],[' จุด (เวลาชน / เดินทางไม่ทัน / ต้องจองตั๋ว / ฝน)',' issues (time clash / not enough travel time / booking / rain)',' 个注意事项（时间冲突 / 来不及赶路 / 需订票 / 下雨）'],
+['ดูและแก้ไขอัตโนมัติ →','View & auto-fix →','查看并自动修复 →'],
+['งบตามแผน / คน','Planned budget / person','计划预算 / 人'],['จ่ายจริงเฉลี่ย / คน','Avg. spent / person','人均实际花费'],['ทำแล้ว / ทั้งหมด','Done / Total','已完成 / 总数'],
+['เตรียมตัวเสร็จแล้ว','Prepared','已准备'],['งบตั้งไว้ ฿','Budget ฿','预算 ฿'],['งบประมาณต่อคน','Budget per person','人均预算'],
+['ใช้จริง','Spent','实际花费'],['จากงบ','of budget','占预算'],['คงเหลือ ฿','Remaining ฿','剩余 ฿'],
+['สรุปรายวัน (แตะเพื่อดูแผนวันนั้น)','Daily summary (tap to open that day)','每日概览（点击查看当天行程）'],
+['/คน','/person','/人'],[' กิจกรรม',' activities',' 项活动'],['ยังไม่มีแผน','No plan yet','暂无计划'],
+['สภาพอากาศเป็นข้อมูลสถิติปีที่แล้วช่วงเดียวกัน (พยากรณ์ล่วงหน้าจริงจะแสดงเมื่อเหลือ ≤ 16 วัน)','Weather shown is last year\'s data for the same dates (the real forecast appears within 16 days)','天气为去年同期数据（距出发 ≤16 天时显示实时预报）'],
+['ติดตั้งเป็นแอปบนมือถือ','Install as a phone app','安装为手机应用'],['เปิดเร็วเต็มจอ ใช้ออฟไลน์ในจีนได้แม้เน็ตสะดุด','Opens fast, full-screen, works offline in China even when the network drops','打开快、全屏，网络不稳时也可在中国离线使用'],
+['ติดตั้งแอป','Install app','安装应用'],
+['ไม่สามารถเข้าถึงตำแหน่งได้ (กรุณาอนุญาต GPS)','Cannot access location (please allow GPS)','无法获取位置（请允许 GPS）'],
+
+/* ---- now block ---- */
+['โหมดจำลอง','Simulation mode','模拟模式'],['วันที่ ','Day ','第 '],['ออกจากโหมดจำลอง','Exit simulation','退出模拟'],['ลองดูโหมดระหว่างทริป','Try in-trip mode','试试旅途中模式'],
+['การ์ดโรงแรม','Hotel card','酒店卡片'],['การ์ดแท็กซี่','Taxi card','出租车卡片'],['เสร็จแล้ว','Done','完成'],['ดูโพลารอยด์','View polaroid','查看拍立得'],['เช็คอินรูป','Photo check-in','拍照打卡'],
+['ตอนนี้','Now','现在'],['ถัดไป · อีก','Next · in','下一个 · 还有'],[' ชม.',' h',' 小时'],['นาที','min','分钟'],['ช่วงว่าง พักผ่อน/เดินเล่นได้','Free time — relax or stroll around','空档，可休息或随便逛逛'],
+['เวลาเซี่ยงไฮ้','Shanghai time','上海时间'],['หมดแผนวันนี้แล้ว','Plan finished for today','今天的行程已结束'],['การ์ดกลับโรงแรม','Back-to-hotel card','回酒店卡片'],
+
+/* ---- plan ---- */
+['เพิ่มวัน','Add day','添加一天',1],['ทุกหมวด','All categories','所有类别'],['ค้นหากิจกรรม/สถานที่','Search activities / places','搜索活动/地点'],['อากาศ','Weather','天气',1],
+['ทุกวัน','All days','所有日期'],['ยังไม่มีวัน กด "+ เพิ่มวัน" เพื่อเริ่ม','No days yet — tap "+ Add day" to start','还没有日期，点击“+ 添加一天”开始'],
+['+ กิจกรรม','+ Activity','+ 活动'],['-30น.','-30m','-30分'],['+30น.','+30m','+30分'],
+['เลื่อนเวลาทั้งวันเร็วขึ้น 30 นาที','Shift the whole day 30 min earlier','整天提前 30 分钟'],['เลื่อนเวลาทั้งวันช้าลง 30 นาที','Shift the whole day 30 min later','整天推迟 30 分钟'],
+['แก้ชื่อวัน','Rename day','重命名'],['เลื่อนวันขึ้น','Move day up','上移'],['เลื่อนวันลง','Move day down','下移'],['ลบวันนี้','Delete this day','删除这一天'],
+['ไม่มีกิจกรรมที่ตรงเงื่อนไข','No activities match','没有符合条件的活动'],['ยังไม่มีกิจกรรม','No activities yet','暂无活动'],['เช็คอินแล้ว','Checked in','已打卡'],
+['อัปโหลดรูป / แต่งโพลารอยด์สถานที่นี้','Upload photo / style polaroid for this place','上传照片 / 装饰此地拍立得'],['แตะเพื่อดู/แต่งโพลารอยด์','Tap to view/style polaroid','点击查看/装饰拍立得'],
+['การ์ดแท็กซี่','Taxi card','出租车卡片'],['ยังไม่จบ (ถึง','has not ended (until','尚未结束（至'],[') แต่ ',') but ',') 但 '],[' เริ่ม ',' starts ',' 开始于 '],
+['เลื่อนเป็น','Move to','改为'],['ห่าง ~','is ~','相距约 '],[' กม. ควรเผื่อ ~',' km away, allow ~',' 公里，建议预留约 '],[' นาที (มี ',' min (only ',' 分钟（仅有 '],[' นาที)',' min)',' 分钟）'],
+['แทรกเดินทาง','Insert transit','插入交通'],['วันนี้แน่นไป','Packed day','今天太满'],[' กิจกรรม ~',' activities ~',' 项活动 约 '],[' ชม.)',' h)',' 小时）'],
+['ค่าใช้จ่ายตามแผนวันนี้ ~฿','Planned cost today ~฿','今日计划花费 约 ฿'],['/คน เกินงบเฉลี่ยต่อวัน ฿','/person exceeds the daily average budget ฿','/人 超出日均预算 ฿'],
+['🎫 มี ','🎫 ','🎫 '],[' กิจกรรมที่ต้องจองล่วงหน้าแต่ยังไม่ได้กดจอง',' activities need advance booking but are not booked yet',' 项活动需提前预订但尚未预订'],
+['โอกาสฝน','Chance of rain','降雨概率'],[' มีกิจกรรมกลางแจ้ง ',' has outdoor activities: ',' 有户外活动：'],[' รายการ',' items',' 项'],
+['สลับกับวันที่','Swap with day','与第几天互换'],['สลับแผนวันที่','Swapped plan of day','已互换行程：第'],[' แล้ว','',''],
+['ปรับเวลาเป็น ','Time set to ','时间已改为 '],['เลื่อนเวลาทั้งวัน','Shifted whole day','整天已平移'],['นาทีแล้ว','min','分钟'],['แทรกรายการเดินทางแล้ว','Transit item inserted','已插入交通项目'],
+['เดินทางไป','Travel to','前往'],
+
+/* ---- forms ---- */
+['เพิ่มกิจกรรม','Add activity','添加活动'],['แก้ไขกิจกรรม','Edit activity','编辑活动'],['เวลาเริ่ม','Start time','开始时间'],['ใช้เวลา (นาที)','Duration (min)','时长（分钟）'],
+['ชื่อกิจกรรม','Activity name','活动名称'],['หมวด','Category','类别',1],['สถานที่ (ชื่ออังกฤษ ใช้ค้นแผนที่)','Place (English name, used for map search)','地点（英文名，用于地图搜索）'],
+['ชื่อภาษาจีน (สำหรับการ์ดแท็กซี่ / Amap)','Chinese name (for taxi card / Amap)','中文名（用于出租车卡片 / 高德）'],['ที่อยู่ภาษาจีน / สถานีรถไฟใต้ดิน ทางออก','Chinese address / Metro station exit','中文地址 / 地铁站出口'],
+['พิกัด (lat, lng)','Coordinates (lat, lng)','坐标 (lat, lng)'],['พิกัด (ถ้ามี)','Coordinates (optional)','坐标（可选）'],['พิกัด','Coordinates','坐标',1],
+['สถานะการจองตั๋ว/คิว','Ticket / queue booking status','门票/排队预订状态'],['กิจกรรมกลางแจ้ง (ใช้เตือนเมื่อฝนตก)','Outdoor activity (used for rain warnings)','户外活动（用于下雨提醒）'],
+['ค่าใช้จ่ายต่อคน (หยวน ¥ · พิมพ์บวกเลขได้ เช่น 40+20)','Cost per person (CNY ¥ · you can type sums, e.g. 40+20)','人均费用（人民币 ¥ · 可输入加法，如 40+20）'],['ค่าใช้จ่ายต่อคน (¥)','Cost per person (¥)','人均费用（¥）'],
+['โน้ตเพิ่มเติม','Extra notes','备注'],['กรุณาใส่ชื่อกิจกรรม','Please enter an activity name','请输入活动名称'],['รูปแบบพิกัดไม่ถูกต้อง เช่น 31.24, 121.49','Invalid coordinates, e.g. 31.24, 121.49','坐标格式不正确，例如 31.24, 121.49'],
+['รูปแบบพิกัดไม่ถูกต้อง','Invalid coordinates','坐标格式不正确'],['บันทึกแล้ว','Saved','已保存'],['ชื่อ/ธีมของวัน','Day name / theme','当天名称/主题'],['วันใหม่','New day','新的一天'],
+['แก้ไขชื่อวัน','Rename day','重命名'],['เพิ่มสถานที่เช็คอินรูป','Add a check-in place','添加打卡地点'],['ชื่อสถานที่ / ร้าน','Place / shop name','地点 / 店名'],
+['ชื่อภาษาจีน (ถ้ามี)','Chinese name (optional)','中文名（可选）'],['ชื่อภาษาจีน','Chinese name','中文名'],['กรุณาใส่ชื่อสถานที่','Please enter a place name','请输入地点名称'],
+['กดหาอัตโนมัติ หรือเลือกจากคลังสถานที่ฮิตด้านบน','Auto-search, or pick from the popular places above','自动查找，或从上方热门地点选择'],['หาพิกัด','Find','查找'],
+['เช่น 120 หรือ 45+35+20','e.g. 120 or 45+35+20','例如 120 或 45+35+20'],['คัดลอกกิจกรรมแล้ว','Activity duplicated','活动已复制'],['คัดลอก','Duplicate','复制',1],['(สำเนา)','(copy)','（副本）'],
+['เลือกสถานที่ฮิตในเซี่ยงไฮ้ (เติมชื่อจีน + พิกัด + รถไฟใต้ดินอัตโนมัติ)','Pick a popular Shanghai place (auto-fills Chinese name + coordinates + Metro)','选择上海热门地点（自动填入中文名 + 坐标 + 地铁）'],
+['เลือกจากคลังสถานที่ฮิต','Pick from popular places','从热门地点选择'],[' แห่ง) หรือกรอกเองด้านล่าง',' places) or type below',' 处）或在下方手动填写'],
+['ใส่ชื่อสถานที่ก่อน','Enter a place name first','请先输入地点名称'],['รอบนี้','This round:','这一轮：'],['กำลังค้นหาพิกัด...','Searching for coordinates...','正在查找坐标...'],['พบในคลังออฟไลน์: ','Found in offline library: ','离线库中找到：'],
+['เจอแล้ว: ','Found: ','找到了：'],['ไม่พบ ลองเลือกจากคลังสถานที่ฮิตหรือวางพิกัดเอง','Not found — try the popular places or paste coordinates','未找到，请从热门地点选择或粘贴坐标'],
+['เติมข้อมูล ','Filled in ','已填入 '],['ใส่ "','Add "','添加“'],['" ลงแผน','" to plan','”到行程'],['เพิ่มลงแผนแล้ว','Added to plan','已加入行程'],['เพิ่มวันในแผนก่อน','Add a day to the plan first','请先在行程中添加一天'],
+['ยืนยันการลบ','Confirm delete','确认删除'],['ลบ "','Delete "','删除“'],['" และกิจกรรมทั้งหมดในวันนี้?','" and all activities of this day?','”及当天所有活动？'],
+['ลบแล้ว: ','Deleted: ','已删除：'],['ลบรูปนี้?','Delete this photo?','删除这张照片？'],['ลบรูปเช็คอินของสถานที่นี้?','Delete the check-in photo of this place?','删除此地的打卡照片？'],['ลบรูปแล้ว','Photo deleted','照片已删除'],
+
+/* ---- taxi / quick ---- */
+['โชว์หน้าจอนี้ให้คนขับแท็กซี่ / DiDi','Show this screen to the taxi / DiDi driver','请把此屏幕给出租车 / 滴滴司机看'],['อ่านออกเสียง','Read aloud','朗读'],['คัดลอกชื่อจีน','Copy Chinese name','复制中文名'],
+['คัดลอกชื่อสถานที่แล้ว วางใน DiDi/Amap ได้เลย','Name copied — paste it in DiDi/Amap','已复制地名，可粘贴到滴滴/高德'],['ยังไม่มีชื่อภาษาจีน แตะกิจกรรมเพื่อเพิ่มได้','No Chinese name yet — tap the activity to add one','还没有中文名，点击活动即可添加'],
+['เบราว์เซอร์ไม่รองรับเสียง','Your browser does not support speech','浏览器不支持语音'],['ใส่ข้อมูลโรงแรมในหน้าตั้งค่าก่อน','Enter your hotel info in Settings first','请先在设置中填写酒店信息'],
+['การ์ดด่วน & ช่วยเหลือฉุกเฉิน','Quick cards & emergency help','快捷卡片与紧急求助'],['กลับโรงแรมที่พัก','Back to my hotel','回酒店'],['ยังไม่ได้ตั้งค่าชื่อโรงแรม','Hotel name not set','尚未设置酒店名称'],
+['โชว์การ์ดกลับโรงแรม','Show back-to-hotel card','显示回酒店卡片'],['ตั้งค่าโรงแรม','Set up hotel','设置酒店'],['เลือกจุดหมายด่วนในเซี่ยงไฮ้','Pick a quick destination in Shanghai','选择上海的快捷目的地'],
+['แตะเพื่อเปิดการ์ดแท็กซี่ทันที','Tap to open a taxi card instantly','点击立即打开出租车卡片'],['เบอร์ฉุกเฉินในจีน & สถานกงสุลไทย','China emergency numbers & Thai consulate','中国紧急电话与泰国领事馆'],
+['กงสุลไทยเซี่ยงไฮ้','Thai Consulate Shanghai','泰国驻上海领事馆'],['ตำรวจ 110','Police 110','报警 110'],['รถพยาบาล 120','Ambulance 120','急救 120'],
+['ตำรวจ','Police','警察',1],['รถพยาบาล','Ambulance','救护车',1],['ดับเพลิง','Fire','消防',1],['อุบัติเหตุจราจร','Traffic accident','交通事故',1],
+['เบอร์ฉุกเฉินในจีน','China emergency numbers','中国紧急电话'],['ทางออก','Exit','出口'],['ปีที่แล้ว','last year','去年'],
+
+/* ---- map ---- */
+['มาตรฐาน (OSM)','Standard (OSM)','标准 (OSM)'],['แผนที่สว่าง (Carto)','Light map (Carto)','浅色地图 (Carto)'],['แผนที่จีน (高德 Amap)','China map (高德 Amap)','中国地图（高德）'],
+['ตำแหน่งของฉัน','My location','我的位置'],['ตัวเลข','Numbers','数字'],['ลำดับกิจกรรม','order of activities','活动顺序'],['โรงแรม','Hotel','酒店',1],
+['ระยะทางต่อวัน (เส้นตรงโดยประมาณ)','Distance per day (approx. straight line)','每日距离（直线估算）'],[' กม.',' km',' 公里'],['เดินทางไกล ลองจัดโซนใกล้กัน','Long travel — try grouping nearby places','路程较远，试试把相近地点排在一起'],
+['รายการที่ยังไม่มีพิกัด','Items without coordinates','尚无坐标的项目'],['แตะเพื่อเลือกพิกัด','Tap to set coordinates','点击设置坐标'],['โหลดแผนที่ไม่ได้ (ต้องต่ออินเทอร์เน็ตครั้งแรก)','Cannot load the map (internet needed the first time)','无法加载地图（首次需联网）'],
+['อุปกรณ์ไม่รองรับ GPS','Device does not support GPS','设备不支持 GPS'],['กำลังหาตำแหน่งปัจจุบัน...','Finding your current location...','正在定位...'],['ตำแหน่งของคุณตอนนี้','Your location now','你当前的位置'],['พบตำแหน่งของคุณแล้ว','Location found','已找到你的位置'],
+['การ์ดแท็กซี่','Taxi card','出租车卡片'],['แก้ไข','Edit','编辑',1],['โพลารอยด์','Polaroid','拍立得',1],
+
+/* ---- money ---- */
+['เพิ่มรายจ่าย','Add expense','添加支出'],['แก้ไขรายจ่าย','Edit expense','编辑支出'],['สแกนใบเสร็จ','Scan receipt','扫描小票'],['คัดลอกสรุปส่ง LINE','Copy summary for LINE','复制摘要发 LINE'],
+['สรุปรายคน','Per-person summary','个人汇总'],['ส่วนของตัวเอง','Own share','个人份额'],['ได้เงินคืน','gets money back','可收回'],['ต้องโอนเพิ่ม','needs to pay more','需补付'],
+['สรุปใครต้องโอนให้ใคร','Who pays whom','谁转给谁'],['ใครต้องโอนให้ใคร','Who pays whom','谁转给谁'],['คัดลอกยอดโอน','Copy transfers','复制转账明细'],
+['ไม่มียอดค้าง เคลียร์กันหมดแล้ว','Nothing owed — all settled','没有欠款，已全部结清'],['ตามหมวด','By category','按类别'],['รายการทั้งหมด','All items','全部项目'],['ทุกคน','Everyone','所有人'],
+['ยังไม่มีรายจ่าย','No expenses yet','暂无支出'],['ระบุยอดรายคน','Per-person amounts','按人指定金额'],['จ่ายโดย','Paid by','付款人'],[' · หาร ',' · split ',' · 分摊 '],
+['รายการ (เช่น หม้อไฟ Haidilao, ค่าแท็กซี่)','Description (e.g. Haidilao hot pot, taxi fare)','项目（如 海底捞、打车费）'],['จำนวนเงินรวม (พิมพ์บวกเลขได้ เช่น 65+40+25)','Total amount (you can type sums, e.g. 65+40+25)','总金额（可输入加法，如 65+40+25）'],
+['สกุลเงิน','Currency','币种',1],['หยวน ¥ (CNY)','Yuan ¥ (CNY)','人民币 ¥ (CNY)'],['บาท ฿ (THB)','Baht ฿ (THB)','泰铢 ฿ (THB)'],['หยวน (CNY)','Yuan (CNY)','人民币 (CNY)'],
+['ใครเป็นคนจ่าย','Who paid','谁付的款'],['วิธีหารค่าใช้จ่าย','How to split','分摊方式'],['หารเท่ากัน','Split equally','平均分摊'],['ระบุยอดแต่ละคน','Specify each person','按人指定'],
+['เลือกทุกคน','Select all','全选'],['ล้างทั้งหมด','Clear all','清空'],['0 (เว้นว่างถ้าไม่หาร)','0 (leave blank if not sharing)','0（不分摊则留空）'],['พิมพ์เลขหรือบวกเลขรายคน ระบบจะรวมเป็นยอดทั้งหมดให้อัตโนมัติ','Type numbers or sums per person — the total is added up automatically','按人输入数字或加法，总额自动汇总'],
+['ระบุยอดของสมาชิกอย่างน้อย 1 คน','Enter an amount for at least 1 member','请至少为 1 位成员填写金额'],['เลือกคนหารอย่างน้อย 1 คน','Select at least 1 person to split with','请至少选择 1 位分摊者'],['ใส่ชื่อรายการและจำนวนเงิน','Enter a description and amount','请输入项目和金额'],
+['บันทึกรายจ่ายแล้ว','Expense saved','支出已保存'],['ลบรายจ่าย','Delete expense','删除支出'],['ใบเสร็จ','Receipt','小票'],['กำลังอ่านใบเสร็จ','Reading receipt','正在识别小票'],['กำลังโหลดตัวอ่าน (ครั้งแรกโหลดข้อมูลภาษาจีนนานหน่อย)','Loading reader (first time downloads Chinese data — takes a moment)','正在加载识别器（首次需下载中文数据，稍候）'],
+['อ่านยอดได้ ¥','Read amount ¥','识别金额 ¥'],['ตรวจสอบก่อนบันทึก','— please check before saving','——保存前请核对'],['อ่านยอดไม่ได้ กรอกเองได้เลย','Could not read the amount — type it yourself','无法识别金额，请手动输入'],['สแกนไม่สำเร็จ ลองใหม่ (ต้องมีเน็ตครั้งแรก)','Scan failed, try again (internet needed the first time)','扫描失败，请重试（首次需联网）'],
+['สรุปค่าใช้จ่าย','Expense summary','费用汇总'],['รวมทั้งหมด: ฿','Total: ฿','合计：฿'],['เฉลี่ยคนละ: ฿','Average per person: ฿','人均：฿'],['ยอดรายคน (จ่ายไป / ส่วนของตัวเอง / สุทธิ):','Per person (paid / own share / net):','个人明细（已付 / 个人份额 / 净额）：'],
+['จ่าย ฿','paid ฿','已付 ฿'],['| ใช้จริง ฿','| used ฿','| 实际用 ฿'],['ได้คืน +','gets back +','可收回 +'],['โอนเพิ่ม ','pays more ','需补付 '],['สรุปใครต้องโอนให้ใคร:','Who pays whom:','谁转给谁：'],['โอนให้ ','pays ','转给 '],
+['เคลียร์ครบหมดแล้ว ไม่มียอดค้าง!','All settled — nothing owed!','已全部结清，无欠款！'],['คัดลอกสรุปค่าใช้จ่ายแล้ว วางใน LINE ได้เลย','Summary copied — paste it in LINE','已复制费用汇总，可直接粘贴到 LINE'],
+['รวมทั้งทริป','Trip total','行程合计'],['เฉลี่ย / คน','Average / person','人均'],['จำนวนรายการ','Number of items','项目数'],['+ = ได้เงินคืน · − = ต้องโอนเพิ่ม','+ = gets money back · − = needs to pay more','+ = 可收回 · − = 需补付'],
+
+/* ---- checklist ---- */
+['ความพร้อม','Readiness','准备度'],['เพิ่มรายการ เช่น ซื้อซิม, แลกเงิน...','Add an item, e.g. buy a SIM, change money...','添加事项，如 买电话卡、换钱...'],['ของส่วนกลาง / ทุกคน','Shared / everyone','公共 / 所有人'],
+['พาสปอร์ต (อายุเหลือ > 6 เดือน)','Passport (valid for more than 6 months)','护照（有效期超过 6 个月）'],['พาสปอร์ต (อายุเหลือ','Passport (valid for','护照（有效期'],['เช็คเงื่อนไขฟรีวีซ่า & ใบตม. (Arrival Card)','Check visa-free rules & arrival card','查看免签政策与入境卡'],
+['เช็คเงื่อนไขวีซ่า/ฟรีวีซ่าล่าสุด','Check latest visa / visa-free rules','查看最新签证/免签政策'],['ประกันเดินทางต่างประเทศ','Travel insurance','境外旅游保险'],['ประกันเดินทาง','Travel insurance','旅游保险'],
+['ผูกบัตร Travel Card / เครดิตกับ Alipay & WeChat Pay','Link a travel / credit card to Alipay & WeChat Pay','将旅行卡/信用卡绑定支付宝和微信支付'],['ผูกบัตรกับ Alipay / WeChat Pay','Link your card to Alipay / WeChat Pay','将银行卡绑定支付宝 / 微信支付'],
+['เปิดโรมมิ่ง / ซื้อ eSIM (ใช้ Google, LINE, IG ได้ไม่ติดบล็อก)','Roaming / buy an eSIM (Google, LINE, IG work unblocked)','开通漫游 / 购买 eSIM（可正常使用 Google、LINE、IG）'],['eSIM / โรมมิ่ง (Google, LINE ใช้ผ่านเน็ตจีนไม่ได้)','eSIM / roaming (Google, LINE are blocked on Chinese networks)','eSIM / 漫游（Google、LINE 在中国网络无法使用）'],
+['โหลดแอป Amap (高德地图), MetroMan, แปลภาษา','Download Amap (高德地图), MetroMan, a translator','下载高德地图、MetroMan、翻译软件'],['โหลดแอป Amap, Didi, แอปแปลภาษา','Download Amap, DiDi, a translator app','下载高德、滴滴、翻译软件'],
+['แลกเงินสดหยวนสำรองเล็กน้อย (¥300–500)','Exchange a little spare cash in yuan (¥300–500)','换少量备用人民币现金（¥300–500）'],['เงินสดหยวนสำรองเล็กน้อย','A little spare yuan cash','少量备用人民币现金'],
+['พาวเวอร์แบงก์ (ต้องมีฉลากความจุชัดเจน ≤100Wh ห้ามโหลดใต้เครื่อง)','Power bank (clear capacity label, ≤100Wh, never in checked luggage)','充电宝（容量标识清晰，≤100Wh，不可托运）'],['พาวเวอร์แบงก์ (ห้ามโหลดใต้เครื่อง)','Power bank (not in checked luggage)','充电宝（不可托运）'],
+['ปลั๊กแปลง (จีนใช้ขาแบน 2 ขา / ขาเฉียง 3 ขา 220V)','Plug adapter (China uses 2 flat pins / 3 angled pins, 220V)','转换插头（中国使用两脚扁插 / 三脚斜插，220V）'],['ปลั๊กแปลง','Plug adapter','转换插头'],
+['ยาประจำตัว & ทิชชู่เปียก','Personal medicine & wet wipes','常用药和湿巾'],['ยาประจำตัว','Personal medicine','常用药'],['ใบจองโรงแรม (มีชื่อ-ที่อยู่ภาษาจีน)','Hotel booking (with Chinese name & address)','酒店预订单（含中文名称和地址）'],['จองโรงแรม','Book hotel','预订酒店'],
+['ตั๋วเครื่องบินไป-กลับ','Round-trip flight tickets','往返机票'],['จองตั๋วเครื่องบิน','Book flights','预订机票'],
+
+/* ---- wishlist ---- */
+['เพิ่มที่อยากไป','Add a wish','添加想去的地方'],['แก้ไขที่อยากไป','Edit wish','编辑想去的地方'],['แตะชื่อเพื่อนเพื่อโหวต · เรียงตามคะแนนโหวต','Tap a friend\'s name to vote · sorted by votes','点击朋友名字投票 · 按票数排序'],['อยู่ในแผนแล้ว','In the plan','已在行程中'],
+['ใส่ลงแผน','Add to plan','加入行程'],['ยังไม่มีรายการ','No items yet','暂无项目'],['โน้ต / เหตุผล','Note / reason','备注 / 理由'],['ใส่ชื่อสถานที่','Enter a place name','请输入地点名称'],
+['ใช้เวลาทั้งวัน ควรจองล่วงหน้า','Takes a full day — book in advance','需要一整天，建议提前预订'],['ใช้เวลาทั้งวัน','Takes a full day','需要一整天'],['จุดถ่ายรูปโค้งน้ำเห็นหอไข่มุกคนไม่แน่น','Photo spot on the river bend with a Pearl Tower view, not crowded','江湾拍照点，可看东方明珠，人不多'],
+['ตึกต้นไม้ 1,000 ต้น','The building with 1,000 trees','千棵树大厦'],['คาเฟ่ถนน Anfu Road','Anfu Road cafés','安福路咖啡馆'],['ย่านฮิตสายคาเฟ่และสตรีทแฟชั่น','Trendy area for cafés and street fashion','咖啡馆和街头时尚热门街区'],
+['สาขาใหญ่ข้างเรือ LV','Flagship branch next to the LV ship','LV 船旁的旗舰店'],['ปูขนเซี่ยงไฮ้ (เซี่ยหวงเมี่ยน)','Shanghai hairy crab (crab-roe noodles)','上海大闸蟹（蟹黄面）'],['ปูขนเซี่ยงไฮ้','Shanghai hairy crab','上海大闸蟹'],
+['บะหมี่มันปูเข้มข้น','Rich crab-roe noodles','浓郁的蟹黄面'],['อร่อยช่วงปลายปี','Best at year-end','年底最好吃'],['ใกล้กว่าจูเจียเจี่ยว','Closer than Zhujiajiao','比朱家角更近'],['คาเฟ่สวยๆ','Pretty cafés','漂亮的咖啡馆'],['แกลเลอรี่ศิลปะ','Art galleries','艺术画廊'],
+
+/* ---- diary / polaroid ---- */
+['โพลารอยด์ตามสถานที่','Polaroids by place','按地点的拍立得'],['บันทึกรายวัน & รีวิว','Daily diary & reviews','每日日记与评分'],['สมุดสะสมโพลารอยด์ & ตราประทับเซี่ยงไฮ้','Shanghai polaroid & stamp collection','上海拍立得与印章收藏册'],
+['เช็คอินรูปถ่ายตามสถานที่จริง แต่งกรอบโพลารอยด์/ตราประทับจีน/ฟิล์มหว่องกาไว พร้อมเซฟลง IG','Check in with photos at real places, style polaroid / Chinese stamp / Wong Kar-wai film frames, ready to save to IG','在真实地点拍照打卡，装饰拍立得 / 中国印章 / 王家卫胶片边框，可直接存到 IG'],
+['มีรูปแล้ว','With photo','已有照片'],['รอเช็คอิน','Waiting','待打卡'],['เพิ่มสถานที่ใหม่','Add new place','添加新地点'],['สร้างโปสเตอร์รวมโพลารอยด์','Create polaroid collage poster','生成拍立得合集海报'],
+['อัปโหลดรูป','Upload photo','上传照片'],['แตะเพื่อเช็คอินที่นี่','Tap to check in here','点击在此打卡'],['ไม่มีสถานที่ในตัวกรองนี้','No places in this filter','此筛选下没有地点'],
+['รูปเก็บในเครื่องนี้ (ประหยัดเน็ต สูงสุด 6 รูป/วัน) · ข้อความและดาวซิงก์กับเพื่อน','Photos stay on this device (saves data, max 6 photos/day) · text and stars sync with friends','照片仅保存在本机（省流量，每天最多 6 张）· 文字和星级与朋友同步'],
+['วันนี้เป็นยังไงบ้าง ประทับใจอะไร...','How was today? What impressed you...','今天怎么样？有什么印象深刻的事...'],['กำลังเพิ่มรูป...','Adding photos...','正在添加照片...'],['ลบรูปนี้?','Delete this photo?','删除这张照片？'],
+['โปสเตอร์รวมโพลารอยด์','Polaroid collage poster','拍立得合集海报'],['การ์ดสรุปสถิติทริป','Trip stats card','行程统计卡片'],['คมชัด พร้อมโพสต์ IG / โซเชียล','sharp and ready to post on IG / social media','清晰，可直接发 IG / 社交媒体'],['ขนาด 1080','Size 1080','尺寸 1080'],
+['สร้างการ์ดสรุปทริป','Create trip summary card','生成行程总结卡片'],['กำลังสร้างการ์ด...','Creating card...','正在生成卡片...'],['สรุปทริป','Trip summary','行程总结'],['บันทึกรูปภาพ','Save Image','存储图像'],['กดค้างที่รูปแล้วเลือก','long-press the image and choose','长按图片并选择'],
+['iPhone:','iPhone:','iPhone：'],['บันทึกรูป','Save image','保存图片'],['บันทึกโปสเตอร์','Save poster','保存海报'],['บันทึกภาพ','Save image','保存图片'],['โพลารอยด์เช็คอิน','Polaroid check-in','拍立得打卡'],
+['เลือกรูป / ถ่ายรูปเช็คอิน','Choose / take a check-in photo','选择 / 拍摄打卡照片'],['เปลี่ยนรูปถ่าย','Change photo','更换照片'],['สไตล์กรอบ','Frame style','边框风格'],['สติกเกอร์ตกแต่ง','Decorative stickers','装饰贴纸'],
+['แคปชันใต้ภาพ (ซิงก์กับเพื่อน)','Caption under the photo (syncs with friends)','照片下方配文（与朋友同步）'],['เช่น เสี่ยวหลงเปาฉ่ำมาก! / วิวไฟสวยสุดๆ','e.g. The soup dumplings are so juicy! / Gorgeous night lights','例如 小笼包汁水超多！/ 夜景太美了'],['เช็คอินโดย','Checked in by','打卡人'],['เสร็จสิ้น','Done','完成'],
+['โพลารอยด์น่ารัก','Cute polaroid','可爱拍立得'],['พาสปอร์ตตราประทับ','Passport stamp','护照印章'],['ฟิล์มหว่องกาไว','Wong Kar-wai film','王家卫胶片'],['ปกแมกกาซีน','Magazine cover','杂志封面'],
+['ย่อและแต่งรูปโพลารอยด์','Resizing and styling the polaroid','正在压缩并装饰拍立得'],['กำลังย่อและแต่งรูปโพลารอยด์...','Resizing and styling the polaroid...','正在压缩并装饰拍立得...'],['เช็คอินรูปสถานที่เรียบร้อย!','Photo check-in complete!','照片打卡完成！'],['ไม่สามารถโหลดรูปนี้ได้','Cannot load this image','无法加载此图片'],
+['ดาวน์โหลดการ์ดโพลารอยด์แล้ว','Polaroid card downloaded','拍立得卡片已下载'],['กำลังจัดบอร์ดโพลารอยด์รวมทั้งทริป...','Arranging the polaroid board for the whole trip...','正在排版整个行程的拍立得合集...'],['อัปโหลดรูปตามสถานที่อย่างน้อย 1 แห่งก่อนนะ','Upload a photo for at least 1 place first','请先为至少 1 个地点上传照片'],
+['อุปกรณ์นี้แชร์ไฟล์ไม่ได้ ใช้ปุ่มบันทึกรูปแทน','This device cannot share files — use the save button instead','此设备无法分享文件，请改用保存按钮'],['ด้านล่าง','below','下方'],['กดปุ่ม "เลือกรูป" ด้านล่าง','Tap "Choose photo" below','点击下方“选择照片”'],['ทริปเซี่ยงไฮ้','Shanghai Trip','上海之旅'],['มม.','mm','毫米'],['กำลังอัปเดตอากาศ...','Updating weather...','正在更新天气...'],['ตัวเลข = ลำดับกิจกรรม · 🏨 = โรงแรม','Numbers = activity order · 🏨 = hotel','数字 = 活动顺序 · 🏨 = 酒店'],[' · เช็คอิน ',' · checked in ',' · 已打卡 '],[' จ่าย!',' pays!',' 买单！'],['DiDi (เรียกรถ)','DiDi (ride-hailing)','滴滴（叫车）'],['บาท (THB)','Baht (THB)','泰铢 (THB)'],
+['เลือกรูปเพื่อสร้างฟิล์มภาพยนตร์เซี่ยงไฮ้','Choose a photo to create a Shanghai film frame','选择照片生成上海电影胶片'],['เลือกรูปเพื่อทำปกแมกกาซีนเซี่ยงไฮ้','Choose a photo for a Shanghai magazine cover','选择照片制作上海杂志封面'],
+['อัปโหลดรูปเพื่อประทับตราพาสปอร์ต','Upload a photo to stamp your passport','上传照片以盖护照印章'],['เพื่อสร้างโพลารอยด์เช็คอินสถานที่นี้','to create a check-in polaroid for this place','为此地生成打卡拍立得'],['เลือกรูป','Choose photo','选择照片'],
+['ที่ฮิตสุดในแก๊ง','Most popular in the gang','团队最热门'],['วันที่ประทับใจสุด: วันที่ ','Most memorable day: day ','最难忘的一天：第 '],['สายเปย์ประจำทริป','Biggest spender of the trip','本次旅行最大金主'],['หมดไปกับ','Most spent on ','花费最多的是 '],['มากสุด ฿',' (top spend) ฿',' ฿'],
+['ทริปนี้กำลังจะเป็นความทรงจำที่ดีที่สุด!','This trip is about to become the best memory!','这趟旅行将成为最美好的回忆！'],['เช็คอินรูปสถานที่','Photo check-in','照片打卡'],
+
+/* ---- fun ---- */
+['มื้อนี้กินอะไรดี','What shall we eat?','这顿吃什么'],['ใครจ่ายรอบนี้','Who pays this round?','这轮谁买单'],['หมุนเลย','Spin','开转'],['ตัวเลือกอาหาร','Food options','美食选项'],
+['หนึ่งบรรทัดต่อหนึ่งอย่าง · ร้านหมวด "กิน" ในหน้า ⭐ ที่อยากไป จะถูกเพิ่มให้อัตโนมัติ','One option per line · places in the "Food" category of the ⭐ Wishlist are added automatically','每行一个选项 · ⭐想去列表中“美食”类的地点会自动加入'],
+['โหมดสุ่มคนจ่าย','Payer draw mode','随机付款人模式'],['สุ่มเท่ากันหมด','Equal chance for all','人人机会均等'],['ยุติธรรม (ใครจ่ายน้อย โอกาสโดนสูง)','Fair (those who paid less are more likely)','公平（付得少的人被抽中概率更高）'],
+['โอกาส: ','Odds: ','概率：'],['ยังไม่มีตัวเลือก','No options yet','暂无选项'],['มื้อนี้กิน','We eat','这顿吃'],['รอบนี้','This round:','这一轮：'],['บันทึกรายจ่าย','Record expense','记录支出'],
+['เสี่ยวหลงเปา','Xiaolongbao','小笼包'],['หม้อไฟหม่าล่า','Mala hot pot','麻辣火锅'],['เซิงเจียนเปา (ซาลาเปาทอด)','Sheng jian bao (pan-fried buns)','生煎包'],['บะหมี่มันปู','Crab-roe noodles','蟹黄面'],['บะหมี่เซี่ยงไฮ้','Shanghai noodles','上海面'],
+['เป็ดปักกิ่ง','Peking duck','北京烤鸭'],['ติ่มซำ','Dim sum','点心'],['ชานมไข่มุก','Bubble tea','珍珠奶茶'],['ชานม CHAGEE / HEYTEA','Milk tea CHAGEE / HEYTEA','茶饮 CHAGEE / 喜茶'],['เสียบไม้ปิ้งย่างหม่าล่า','Mala grilled skewers','麻辣烤串'],['ของกินในเซเว่นจีน','Snacks from Chinese 7-Eleven','中国 7-Eleven 小吃'],['เซิงเจียนเปา','Sheng jian bao','生煎包'],
+
+/* ---- info ---- */
+['การ์ด "พาฉันกลับโรงแรม"','"Take me back to my hotel" card','“送我回酒店”卡片'],['แปลงสกุลเงินด่วน','Quick currency converter','快速汇率换算'],['หยวน ¥ (CNY)','Yuan ¥ (CNY)','人民币 ¥ (CNY)'],['บาท ฿','Baht ฿','泰铢 ฿',1],['หยวน ¥','Yuan ¥','人民币 ¥',1],
+['อัปเดต ','Updated ','更新于 '],['จ่ายผ่าน Alipay ด้วยบัตรต่างประเทศ ถ้ายอด','Paying via Alipay with a foreign card: if the amount is','用境外银行卡通过支付宝付款：金额'],['ไม่เสียค่าธรรมเนียม 3%','no 3% fee','无 3% 手续费'],
+['ประโยคภาษาจีนเอาตัวรอด','Survival Chinese phrases','生存中文短语'],['ค้นหาประโยค','Search phrases','搜索短语'],['แตะตัวจีนเพื่อขยายเต็มจอให้คนจีนอ่าน · แตะ','Tap the Chinese text to enlarge it for locals · tap','点击中文放大给当地人看 · 点击'],['เพื่อออกเสียง','to hear it','听发音'],
+['ร้านอาหาร','Restaurants','餐厅',1],['ทั่วไป/ฉุกเฉิน','General/Emergency','通用/紧急',1],['ฟังเสียง','Listen','听发音'],['แตะพื้นหลังเพื่อปิด','Tap the background to close','点击背景关闭'],
+['สวัสดี','Hello','你好'],['ขอบคุณ','Thank you','谢谢'],['ขอโทษครับ/ค่ะ (ขอทาง/ถามทาง)','Excuse me / sorry (asking for way)','不好意思（借过/问路）'],['ห้องน้ำอยู่ที่ไหน','Where is the toilet?','洗手间在哪里？'],['มีทิชชู่ไหม','Do you have tissues?','有纸巾吗？'],['ช่วยด้วย!','Help!','救命！'],
+['มีเมนูภาษาอังกฤษไหม','Do you have an English menu?','有英文菜单吗？'],['เอาอันนี้','I\'ll take this one','我要这个'],['ไม่เอาเผ็ด','Not spicy','不要辣'],['เผ็ดน้อย','Mildly spicy','微辣'],['ไม่ใส่ผักชี','No coriander','不要香菜'],['ฉันไม่กินหมู','I don\'t eat pork','我不吃猪肉'],
+['น้ำเย็น / น้ำใส่น้ำแข็ง','Cold water / iced water','冰水'],['ห่อกลับบ้าน','Takeaway','打包'],['เช็คบิล / เก็บเงิน','The bill, please','买单'],['ราคาเท่าไหร่','How much is it?','多少钱？'],['แพงเกินไป','Too expensive','太贵了'],['ลดหน่อยได้ไหม','Can you lower the price a bit?','能便宜一点吗？'],
+['ลองสวมได้ไหม','Can I try it on?','可以试穿吗？'],['มีชิ้นใหม่ไหม','Do you have a new one?','有新的吗？'],['จ่ายด้วย Alipay ได้ไหม','Can I pay with Alipay?','可以用支付宝吗？'],['ทำ Tax Refund ได้ไหม','Can I get a tax refund?','可以退税吗？'],
+['ฉันต้องการไปที่นี่ (ชี้แผนที่)','I want to go here (point at the map)','我要去这里（指着地图）'],['ช่วยพาฉันกลับโรงแรมนี้','Please take me back to this hotel','请送我回这家酒店'],['สถานีรถไฟใต้ดินอยู่ไหน','Where is the Metro station?','地铁站在哪里？'],['จอดตรงนี้ได้เลย','You can stop here','在这里停车就行'],
+['ทริคสำคัญเมื่อเที่ยวจีน','Key tips for travelling in China','在中国旅行的重要小贴士'],['สแกนจ่ายได้แทบทุกที่ + เปิดเมนู Transport','Scan-to-pay almost everywhere + open the Transport menu','几乎处处可扫码支付 + 打开“出行”菜单'],
+['สแกนขึ้น Metro และรถเมล์เซี่ยงไฮ้ได้เลย ถ้าร้านเกิน ¥200 แยกจ่ายหลายบิลเพื่อเลี่ยงค่าธรรมเนียมบัตร 3%','to ride the Shanghai Metro and buses. If a bill is over ¥200, split it into several payments to avoid the 3% card fee','即可乘坐上海地铁和公交。若账单超过 ¥200，可分多笔支付以避免 3% 刷卡手续费'],
+['แผนที่ที่แม่นที่สุดในจีน บอกทางออกรถไฟใต้ดินและเวลารถมาแม่นยำ (มีโหมดภาษาอังกฤษแล้ว)','The most accurate map in China — shows Metro exits and accurate arrival times (English mode available)','中国最准确的地图，可显示地铁出口和准确到站时间（已有英文模式）'],
+['เรียกผ่าน Mini-App ใน Alipay ได้เลย ไม่ต้องคุยกับคนขับ ปักหมุดรับ-ส่งตามชื่อภาษาจีนในแอปนี้ได้ทันที','Call via the Mini-App inside Alipay — no need to talk to the driver; pin pick-up/drop-off using the Chinese names in this app','可通过支付宝小程序叫车，无需与司机沟通；可用本应用中的中文地名直接定位上下车点'],
+['พาวเวอร์แบงก์ที่สนามบินจีน','Power banks at Chinese airports','中国机场的充电宝'],['ห้ามโหลดใต้เครื่องเด็ดขาด ต้องพกขึ้นเครื่องและตัวเลขความจุ (Wh/mAh) ต้องไม่ลอกเลือน (ห้ามเกิน 100Wh หรือ ~27,000mAh)','Never in checked luggage — carry on board, and the capacity (Wh/mAh) must be legible (max 100Wh or ~27,000mAh)','严禁托运，必须随身携带，且容量标识（Wh/mAh）须清晰（不得超过 100Wh 或约 27,000mAh）'],
+['โน้ตของทริป (ซิงก์กับเพื่อน)','Trip notes (synced with friends)','行程笔记（与朋友同步）'],['เที่ยวบิน, รหัสจอง, เบอร์ติดต่อ...','Flights, booking codes, contacts...','航班、预订码、联系电话...'],['บันทึกและซิงก์อัตโนมัติ','Saved and synced automatically','自动保存并同步'],
+
+/* ---- settings ---- */
+['ข้อมูลทริป','Trip info','行程信息'],['ชื่อทริป','Trip name','行程名称'],['วันเริ่มเดินทาง','Departure date','出发日期'],['อัตราแลกเปลี่ยน (฿ ต่อ ¥1)','Exchange rate (฿ per ¥1)','汇率（每 ¥1 兑 ฿）'],['งบต่อคน (฿)','Budget per person (฿)','人均预算（฿）'],
+['ดึงเรทล่าสุด','Fetch latest rate','获取最新汇率'],['อัปเดตเรทอัตโนมัติ','Auto-update rate','自动更新汇率'],['ล่าสุด ','Latest ','最新 '],['อัปเดตเรทแล้ว ¥1','Rate updated ¥1','汇率已更新 ¥1'],['ดึงเรทไม่ได้ (ออฟไลน์?)','Cannot fetch the rate (offline?)','无法获取汇率（离线？）'],
+['โรงแรมที่พัก','Hotel','住宿酒店'],['ยังไม่ได้ใส่ ใช้สำหรับการ์ด "กลับโรงแรม" และหมุดบนแผนที่','Not entered yet — used for the "back to hotel" card and the map pin','尚未填写，用于“回酒店”卡片和地图标记'],['แก้ไขข้อมูลโรงแรม','Edit hotel info','编辑酒店信息'],['ดูการ์ด','View card','查看卡片'],
+['ข้อมูลโรงแรม','Hotel info','酒店信息'],['ชื่อโรงแรม (อังกฤษ)','Hotel name (English)','酒店名称（英文）'],['ที่อยู่ภาษาจีน (คัดลอกจากหน้าจอง Trip.com / Agoda)','Chinese address (copy from your Trip.com / Agoda booking)','中文地址（从 Trip.com / Agoda 订单复制）'],['เบอร์โทรโรงแรม','Hotel phone','酒店电话'],['บันทึกข้อมูลโรงแรมแล้ว','Hotel info saved','酒店信息已保存'],
+['ฉันคือ','I am','我是'],['ใช้แสดงสถานะออนไลน์และเป็นคนจ่ายเริ่มต้น (ตั้งเฉพาะเครื่องนี้)','Used to show your online status and as the default payer (this device only)','用于显示在线状态并作为默认付款人（仅限本设备）'],
+['ซิงก์เรียลไทม์กับเพื่อน','Real-time sync with friends','与朋友实时同步'],['รหัสห้อง (ทุกคนใช้รหัสเดียวกัน ควรสุ่มให้เดายาก)','Room code (everyone uses the same code — make it hard to guess)','房间码（所有人使用同一个，建议随机生成）'],['เช่น sh-x7k2p9ab','e.g. sh-x7k2p9ab','例如 sh-x7k2p9ab'],
+['ซิงก์ตอนนี้','Sync now','立即同步'],['คัดลอกลิงก์ชวนเพื่อน','Copy invite link','复制邀请链接'],['ตัดการเชื่อมต่อ','Disconnect','断开连接'],['ยังไม่ตั้งค่า','Not set up','未设置'],['ถ้าแก้พร้อมกันตอนออฟไลน์ ข้อมูลที่บันทึกล่าสุดจะชนะ','if edited at the same time while offline, the latest save wins','离线同时编辑时，以最后保存的为准'],
+['สมาชิก','Members','成员'],['เพิ่มสมาชิก','Add member','添加成员'],['การแสดงผล & แอป','Display & app','显示与应用'],['โหมดมืด','Dark mode','深色模式'],['ติดตั้งเป็นแอปแล้ว','Installed as an app','已安装为应用'],
+['สำรองข้อมูล & แชร์แผน (v3.2)','Backup & share plan (v3.2)','备份与分享行程 (v3.2)'],['สำรองข้อมูลเป็นไฟล์ JSON หรือส่งลิงก์แผนให้เพื่อนแบบไม่ใช้ Firebase (ไม่รวมรูปในไดอารี่)','Back up as a JSON file, or send the plan link to friends without Firebase (diary photos not included)','备份为 JSON 文件，或不用 Firebase 直接给朋友发送行程链接（不含日记照片）'],
+['ลิงก์แชร์แผน','Share plan link','行程分享链接'],['ส่งออกไฟล์ JSON','Export JSON file','导出 JSON 文件'],['นำเข้าไฟล์','Import file','导入文件'],['พิมพ์แผน','Print plan','打印行程'],['รีเซ็ตทั้งหมด','Reset everything','全部重置'],
+['กำลังซิงก์ข้อมูลล่าสุด...','Syncing latest data...','正在同步最新数据...'],['ซิงก์ไม่สำเร็จ ตรวจสอบ URL/Rules','Sync failed — check URL/Rules','同步失败，请检查网址/规则'],['ดึงข้อมูลล่าสุดจากเพื่อนแล้ว','Latest data fetched from friends','已从朋友处获取最新数据'],['อัปเดตข้อมูลขึ้นคลาวด์แล้ว','Data uploaded to the cloud','数据已上传云端'],['เชื่อมต่อไม่ได้ ตรวจสอบอินเทอร์เน็ต','Cannot connect — check your internet','无法连接，请检查网络'],
+['มีการอัปเดตจากเพื่อน','Updated by a friend','朋友有更新'],['ใส่ URL และรหัสห้องให้ครบ','Enter both the URL and the room code','请填写网址和房间码'],['เข้าห้อง ','Joined room ','已加入房间 '],[' แล้ว กำลังโหลดแผนจากเพื่อน...',' — loading the plan from friends...',' — 正在加载朋友的行程...'],
+['คัดลอกลิงก์ชวนแล้ว ส่งให้เพื่อนเปิดได้เลย','Invite link copied — send it to friends','邀请链接已复制，发给朋友即可'],['คัดลอกลิงก์แล้ว','Link copied','链接已复制'],['คัดลอก:','Copy:','复制：'],
+['พบข้อมูลทริปจากลิงก์ที่แชร์มา ต้องการโหลดแทนข้อมูลปัจจุบันไหม?','Trip data found in the shared link. Replace the current data?','在分享链接中发现行程数据，是否替换当前数据？'],['ลิงก์ไม่ถูกต้อง','Invalid link','链接无效'],['ไฟล์ไม่ถูกต้อง','Invalid file','文件无效'],
+['นำเข้าและแทนที่ข้อมูลปัจจุบัน?','Import and replace the current data?','导入并替换当前数据？'],['นำเข้าสำเร็จ','Imported','导入成功'],['ดาวน์โหลดไฟล์สำรองแล้ว','Backup file downloaded','备份文件已下载'],['รีเซ็ตกลับเป็นแผนตัวอย่าง? ข้อมูลและรูปทั้งหมดจะหายไป','Reset to the sample plan? All data and photos will be lost','重置为示例行程？所有数据和照片将丢失'],
+['เปิดใน Safari','Open in Safari','在 Safari 中打开'],['ปุ่มแชร์','Share button','分享按钮'],['เพิ่มไปยังหน้าจอโฮม','Add to Home Screen','添加到主屏幕'],['เมนู','Menu','菜单'],['เพิ่มลงในหน้าจอหลัก','Add to Home screen','添加到主屏幕'],['หรือ','or','或'],
+['ต้องเปิดจากเว็บที่โฮสต์ (https) ถึงจะติดตั้งและใช้ออฟไลน์ได้','Must be opened from a hosted site (https) to install and use offline','必须从托管网站 (https) 打开才能安装并离线使用'],['ต้องมีสมาชิกอย่างน้อย 1 คน','At least 1 member is required','至少需要 1 位成员'],
+['ยืนยันการลบ ','Delete ','确认删除 '],['รายการที่ ','','',0],[' เคยจ่าย ',' paid ',' 付过 '],[' รายการจะถูกโอนให้ ',' expenses, which will be reassigned to ',' 笔支出将转给 '],['เพื่อน ','Friend ','朋友 '],['เพื่อนใหม่','New friend','新朋友'],['ลบสมาชิก','Delete member','删除成员'],
+
+/* ---- default itinerary data ---- */
+['มาถึงเซี่ยงไฮ้ & The Bund','Arrive in Shanghai & The Bund','抵达上海与外滩'],['เมืองเก่า & ย่านฝรั่งเศส','Old Town & French Concession','老城区与法租界'],['ลู่เจียจุ่ย & วิวมุมสูง','Lujiazui & Skyline Views','陆家嘴与高空景观'],['หมู่บ้านน้ำจูเจียเจี่ยว','Zhujiajiao Water Town','朱家角水乡'],['ช้อปปิ้ง & กลับบ้าน','Shopping & Heading Home','购物与返程'],
+['ถึงสนามบินผู่ตง (PVG)','Arrive at Pudong Airport (PVG)','抵达浦东机场 (PVG)'],['ผ่าน ตม. / เปิด eSIM / เช็ค Alipay','Immigration / activate eSIM / check Alipay','过海关 / 开通 eSIM / 检查支付宝'],['นั่ง Maglev ไป Longyang Rd','Maglev to Longyang Rd','乘磁悬浮到龙阳路'],
+['(โชว์ Boarding Pass ลดเหลือ ¥40)','(show boarding pass for ¥40)','（出示登机牌优惠至 ¥40）'],['แล้วต่อรถไฟใต้ดิน','then take the Metro','再换乘地铁'],['แล้วต่อใต้ดิน','then take the Metro','再换乘地铁'],['เช็คอินโรงแรม','Hotel check-in','酒店入住'],
+['เดินถนนนานจิง','Stroll Nanjing Road','逛南京路'],['แวะ','Drop by','逛逛'],['ชมวิวกลางคืน The Bund','The Bund night view','外滩夜景'],['ไฟเปิดประมาณ 18:00–22:00 น.','Lights on around 18:00–22:00','灯光约 18:00–22:00 亮起'],['ถ่ายรูปฝั่งลู่เจียจุ่ย','Photos of the Lujiazui side','拍摄陆家嘴一侧'],
+['ไปเช้าคนน้อย ปิดวันจันทร์','Go early to avoid crowds; closed on Mondays','早去人少，周一闭园'],['ไปเช้าคนน้อย','Go early to avoid crowds','早去人少'],['วัดเทพเจ้าประจำเมือง & ของฝาก','City God Temple & souvenirs','城隍庙与伴手礼'],['เสี่ยวหลงเปา Nanxiang','Nanxiang soup dumplings','南翔小笼包'],
+['ซินเทียนตี้ ดินเนอร์','Dinner at Xintiandi','新天地晚餐'],['เดินเล่น Wukang Mansion','Stroll around Wukang Mansion','漫步武康大楼'],['เดินเล่น Wukang Road','Stroll along Wukang Road','漫步武康路'],['จุดชมวิว','observation deck','观景台'],['ซื้อตั๋วออนไลน์ล่วงหน้า','Buy tickets online in advance','提前在线购票'],
+['มื้อกลางวัน IFC Mall','Lunch at IFC Mall','IFC 商场午餐'],['ถ่ายรูปหอไข่มุก & Disney Store','Pearl Tower photos & Disney Store','拍东方明珠与迪士尼商店'],['ถ่ายรูปหอไข่มุก','Pearl Tower photos','拍东方明珠'],['สะพานลอยวงกลมลู่เจียจุ่ย','Lujiazui circular footbridge','陆家嘴环形天桥'],['ล่องเรือแม่น้ำหวงผู่','Huangpu River cruise','黄浦江游船'],
+['รถไฟใต้ดินสาย 17 ไปจูเจียเจี่ยว','Metro Line 17 to Zhujiajiao','乘地铁 17 号线去朱家角'],['เที่ยวหมู่บ้าน + นั่งเรือ','Explore the town + boat ride','游古镇 + 乘船'],['อาหารพื้นเมือง','Local food','当地美食'],['ขาหมูตงพอ / บ๊ะจ่าง','Dongpo pork knuckle / zongzi','东坡肘子 / 粽子'],
+['กินหม้อไฟ Haidilao','Haidilao hot pot','吃海底捞火锅'],['กินหม้อไฟ','Hot pot','吃火锅'],['เลือกสาขาใกล้โรงแรม','Pick a branch near the hotel','选择离酒店近的分店'],['วัดจิ้งอัน','Jing\'an Temple','静安寺'],['ช้อป West Nanjing Rd & Starbucks Roastery','Shop West Nanjing Rd & Starbucks Roastery','逛南京西路与星巴克烘焙工坊'],
+['ช้อป West Nanjing Rd','Shop West Nanjing Rd','逛南京西路'],['เดินทางไปสนามบิน','Travel to the airport','前往机场'],['เผื่อเวลา 3 ชม.','Allow 3 hours','预留 3 小时'],['ท่าอากาศยานสุวรรณภูมิ','(BKK)','素万那普机场'],
+
+/* ---- polaroid / canvas strings ---- */
+[' แห่ง',' places',' 处'],[' รูป',' photos',' 张照片'],[' สถานที่',' places',' 个地点'],['ถึง ','until ','至 '],[' คน',' people',' 人'],
+['จุด','','',1],
+['เซี่ยงไฮ้ ดิสนีย์แลนด์ (Shanghai Disneyland)','Shanghai Disneyland','上海迪士尼乐园'],['ถนนคนเดินนานจิง (Nanjing Road)','Nanjing Road Pedestrian Street','南京路步行街'],['สวนอวี้หยวน (Yu Garden)','Yu Garden','豫园'],['วัดเทพเจ้าประจำเมือง (City God Temple)','City God Temple','城隍庙'],
+['เสี่ยวหลงเปา Nanxiang (สวนอวี้หยวน)','Nanxiang soup dumplings (Yu Garden)','南翔小笼包（豫园）'],['หอไข่มุก (Oriental Pearl Tower)','Oriental Pearl Tower','东方明珠'],['ตึก Shanghai Tower (ชั้น 118)','Shanghai Tower (118th floor)','上海中心大厦（118 层）'],['ห้าง IFC Mall ลู่เจียจุ่ย','IFC Mall, Lujiazui','陆家嘴 IFC 商场'],
+['สะพานลอยวงกลมลู่เจียจุ่ย & Disney Store','Lujiazui circular footbridge & Disney Store','陆家嘴环形天桥与迪士尼商店'],['ตึกอู่คัง (Wukang Mansion)','Wukang Mansion','武康大楼'],['ถนนอันฝู (Anfu Road คาเฟ่ & ช้อป)','Anfu Road (cafés & shops)','安福路（咖啡馆与小店）'],['ซินเทียนตี้ (Xintiandi)','Xintiandi','新天地'],
+['เทียนจื่อฟาง (Tianzifang)','Tianzifang','田子坊'],['วัดจิ้งอัน (Jing\'an Temple)','Jing\'an Temple','静安寺'],['Starbucks Reserve Roastery & เรือ LV','Starbucks Reserve Roastery & the LV ship','星巴克臻选烘焙工坊与 LV 船'],['โครงการ 1000 Trees (Tian An 1000 Trees)','Tian An 1000 Trees','天安千树'],
+['สวน North Bund Greenland (มุมถ่ายรูปโดมเงิน)','North Bund Greenland (silver dome photo spot)','北外滩绿地（银色穹顶拍照点）'],['วัดพระหยกขาว (Jade Buddha Temple)','Jade Buddha Temple','玉佛禅寺'],['หมู่บ้านน้ำจูเจียเจี่ยว (Zhujiajiao)','Zhujiajiao Water Town','朱家角古镇'],['หมู่บ้านโบราณชีเป่า (Qibao Ancient Town)','Qibao Ancient Town','七宝老街'],
+['ล่องเรือแม่น้ำหวงผู่ (Shiliupu Wharf)','Huangpu River cruise (Shiliupu Wharf)','黄浦江游船（十六铺码头）'],['สนามบินผู่ตง (Pudong Airport PVG)','Pudong Airport (PVG)','浦东机场 (PVG)'],['สถานีรถไฟความเร็วสูงหงเฉียว (Hongqiao Railway)','Hongqiao High-speed Railway Station','虹桥高铁站'],['หาดไว่ทาน','Waitan','外滩'],
+['สาย ','Line ','号线 '],['The Bund (หาดไว่ทาน)','The Bund','外滩'],['เรือ LV','LV ship','LV 船'],
+
+/* ---- misc UI ---- */
+['ภาษา','Language','语言',1],['ชื่อเรียก','Name','名称',1],['(ถ้ามี)','(optional)','（可选）'],['ใส่','Add','添加',1],['ลงแผน','to plan','到行程',1],['แล้ว','done','已',1],['หยวน','Yuan','人民币',1]
+];
+
+/* ================= i18n : ไทย / English / 中文 ================= */
+const LANGS={th:'ไทย',en:'English',zh:'中文'};
+let LG='th';try{LG=localStorage.getItem('sh-lang')||'th'}catch(e){}
+if(!LANGS[LG])LG='th';
+const LOC=()=>({th:'th-TH',en:'en-US',zh:'zh-CN'}[LG]||'th-TH');
+const hasTh=s=>/[\u0E00-\u0E3E\u0E40-\u0E7F]/.test(s);
+const I18N={en:{ex:new Map(),fr:[]},zh:{ex:new Map(),fr:[]}};
+(function buildI18n(){
+  const fr={en:new Map(),zh:new Map()};
+  I18N_ROWS.forEach(([th,en,zh,only])=>{
+    I18N.en.ex.set(th,en);I18N.zh.ex.set(th,zh);
+    if(!only){fr.en.set(th,en);fr.zh.set(th,zh)}else{fr.en.delete(th);fr.zh.delete(th)}
+  });
+  ['en','zh'].forEach(l=>{I18N[l].fr=[...fr[l]].sort((a,b)=>b[0].length-a[0].length)});
+})();
+const I18N_CACHE={en:new Map(),zh:new Map()};
+const TRIM_RE=/^([^\u0E00-\u0E3E\u0E40-\u0E7FA-Za-z0-9฿]*)([\s\S]*?)([^\u0E00-\u0E3E\u0E40-\u0E7FA-Za-z0-9฿]*)$/;
+function trLang(s){
+  const d=I18N[LG],m=TRIM_RE.exec(s);
+  if(m&&d.ex.has(m[2]))return m[1]+d.ex.get(m[2])+m[3];
+  let r=s;
+  for(const [k,v] of d.fr){if(r.includes(k))r=r.split(k).join(v)}
+  return r.replace(/ {2,}/g,' ');
+}
+function T(s){
+  if(LG==='th'||typeof s!=='string'||!hasTh(s))return s;
+  const c=I18N_CACHE[LG];let r=c.get(s);
+  if(r===undefined){r=trLang(s);if(c.size>4000)c.clear();c.set(s,r)}
+  return r;
+}
+function trDom(root){
+  if(!root||typeof document==='undefined')return;
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>{const p=n.parentNode&&n.parentNode.nodeName;return(p==='SCRIPT'||p==='STYLE'||p==='TEXTAREA')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT}});
+  const nodes=[];while(w.nextNode())nodes.push(w.currentNode);
+  nodes.forEach(n=>{
+    if(n.__o===undefined){if(!hasTh(n.nodeValue))return;n.__o=n.nodeValue}
+    const v=T(n.__o);if(n.nodeValue!==v)n.nodeValue=v;
+  });
+  const els=root.querySelectorAll?root.querySelectorAll('[placeholder],[title],[aria-label]'):[];
+  const fix=el=>{
+    ['placeholder','title','aria-label'].forEach(a=>{
+      if(!el.hasAttribute(a))return;
+      el.__oa=el.__oa||{};
+      if(el.__oa[a]===undefined){const v=el.getAttribute(a);if(!hasTh(v))return;el.__oa[a]=v}
+      const v=T(el.__oa[a]);if(el.getAttribute(a)!==v)el.setAttribute(a,v);
+    });
+  };
+  if(root.hasAttribute)fix(root);
+  els.forEach(fix);
+}
+function applyLang(){
+  if(typeof document==='undefined')return;
+  document.documentElement.lang=LG==='zh'?'zh-CN':LG;
+  trDom(document.body);
+}
+function setLang(l){
+  if(!LANGS[l])return;
+  LG=l;try{localStorage.setItem('sh-lang',l)}catch(e){}
+  closeModal();render();applyLang();document.title=T(S.trip.name);
+  toast({th:'เปลี่ยนเป็นภาษาไทยแล้ว',en:'Language: English',zh:'语言已切换为中文'}[l]);
+}
+function langSwitchHTML(){
+  return `<div class="langsw noprint">🌐 ${Object.entries(LANGS).map(([k,v])=>`<button class="${LG===k?'on':''}" onclick="setLang('${k}')">${v}</button>`).join('')}</div>`;
+}
+function langCardHTML(){
+  const ttl={th:'ภาษา',en:'Language',zh:'语言'}[LG];
+  return `<div class="card"><h3>🌐 ${ttl} · Language · 语言</h3><div class="row">${Object.entries(LANGS).map(([k,v])=>`<button class="btn ${LG===k?'p':''}" style="min-width:110px;justify-content:center" onclick="setLang('${k}')">${v}</button>`).join('')}</div></div>`;
+}
+if(typeof window!=='undefined'){
+  /* native dialogs */
+  const _al=window.alert.bind(window),_cf=window.confirm.bind(window),_pr=window.prompt.bind(window);
+  window.alert=m=>_al(T(m));window.confirm=m=>_cf(T(m));window.prompt=(m,d)=>_pr(T(m),d);
+}
+if(typeof CanvasRenderingContext2D!=='undefined'){
+  const P2=CanvasRenderingContext2D.prototype,_ft=P2.fillText,_mt=P2.measureText;
+  P2.fillText=function(t,...a){return _ft.call(this,T(String(t)),...a)};
+  P2.measureText=function(t){return _mt.call(this,T(String(t)))};
+}
+
 /* ================= Utils ================= */
 function uid(){return Math.random().toString(36).slice(2,10)}
 const KEY='shanghai-trip-v1',PKEY='sh-prefs',PHKEY='sh-photos',WKEY='sh-weather';
 const CLIENT=uid();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const jsq=s=>esc(String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' '));
-const fmt=n=>Math.round(+n||0).toLocaleString('th-TH');
-const fmt2=n=>(+n||0).toLocaleString('th-TH',{maximumFractionDigits:2});
+const fmt=n=>Math.round(+n||0).toLocaleString(LOC());
+const fmt2=n=>(+n||0).toLocaleString(LOC(),{maximumFractionDigits:2});
 const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const addDays=(s,n)=>{const d=new Date(s+'T00:00:00');d.setDate(d.getDate()+n);return d};
 const dayDiff=(a,b)=>Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/864e5);
-const thDate=d=>d.toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short',year:'2-digit'});
+const thDate=d=>d.toLocaleDateString(LOC(),{weekday:'short',day:'numeric',month:'short',year:'2-digit'});
 const toMin=t=>{const m=/^(\d{1,2}):(\d{2})/.exec(t||'');return m?(+m[1])*60+(+m[2]):null};
 const fromMin=m=>{const x=((Math.round(m)%1440)+1440)%1440;return `${String(Math.floor(x/60)).padStart(2,'0')}:${String(x%60).padStart(2,'0')}`};
 const pt=s=>{const m=String(s||'').match(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);return m?[+m[1],+m[2]]:null};
@@ -184,10 +506,10 @@ function toast(t,undoFn=null){
   const el=document.getElementById('toast');
   if(undoFn){
     undoSnap=undoFn;
-    el.innerHTML=`<span>${esc(t)}</span><button onclick="runUndo()">↩️ เลิกทำ</button>`;
+    el.innerHTML=`<span>${esc(T(t))}</span><button onclick="runUndo()">${T('↩️ เลิกทำ')}</button>`;
   }else{
     undoSnap=null;
-    el.textContent=t;
+    el.textContent=T(t);
   }
   el.classList.add('show');clearTimeout(el._t);
   el._t=setTimeout(()=>{el.classList.remove('show');undoSnap=null},undoFn?5000:2400);
@@ -243,11 +565,11 @@ function defaults(){
   const day=(title,items)=>({id:uid(),title,items,diary:{text:'',ratings:{}}});
   const PVG=['Shanghai Pudong International Airport','上海浦东国际机场','31.1443,121.8083'];
   return {v:3,updatedAt:0,
-    trip:{name:'ทริปเซี่ยงไฮ้ 🇨🇳',start:iso(s),rate:4.8,autoRate:true,rateAt:0,budget:15000,hotel:{name:'',zh:'',addr:'',phone:'',ll:''}},
-    members:[['m1','เพื่อน 1','#c8102e'],['m2','เพื่อน 2','#2563eb'],['m3','เพื่อน 3','#16a34a'],['m4','เพื่อน 4','#d97706']].map(([id,name,color])=>({id,name,color})),
+    trip:{name:'ทริปเซี่ยงไฮ้ 🇨🇳',start:'2026-11-20',rate:5.064,autoRate:true,rateAt:0,budget:200000,hotel:{name:'Home Inn Shanghai',zh:'如家快捷酒店上海南京路步行街黄河路店',addr:'黄浦区黄河路288号',phone:'',ll:'31.24832,121.43296'}},
+    members:[['m1','Man','#c8102e'],['m2','May','#f4a4c0'],['m3',"P'Buz",'#16a34a'],['m4','JubJang','#d97706']].map(([id,name,color])=>({id,name,color})),
     days:[
       day('มาถึงเซี่ยงไฮ้ & The Bund',[
-        it('10:00',90,'ถึงสนามบินผู่ตง (PVG)','move',...PVG,0,'ผ่าน ตม. / เปิด eSIM / เช็ค Alipay',false),
+        it('04:00',60,'Suvarnabhumi Airport ท่าอากาศยานสุวรรณภูมิ','move','Suvarnabhumi Airport','素万那普国际机场','13.68188,100.74858',0,'',false),
         it('11:45',45,'นั่ง Maglev ไป Longyang Rd','move','Longyang Road Station','龙阳路站','31.2036,121.5577',50,'Maglev ~8 นาที (โชว์ Boarding Pass ลดเหลือ ¥40) แล้วต่อใต้ดิน',false),
         it('14:00',60,'เช็คอินโรงแรม','hotel','','','',0,'',false),
         it('16:30',120,'เดินถนนนานจิง','shop','Nanjing Road Pedestrian Street','南京路步行街','31.2353,121.4750',0,'แวะ Pop Mart / M&M\'s World',true),
@@ -265,9 +587,9 @@ function defaults(){
         it('14:00',60,'ถ่ายรูปหอไข่มุก & Disney Store','sight','Oriental Pearl Tower','东方明珠','31.2397,121.4998',0,'',true),
         it('15:15',45,'สะพานลอยวงกลมลู่เจียจุ่ย','sight','Lujiazui Pedestrian Bridge','陆家嘴环形天桥','31.2373,121.5007',0,'',true),
         it('19:00',90,'ล่องเรือแม่น้ำหวงผู่','sight','Shiliupu Wharf','十六铺码头','31.2297,121.4985',120,'',true,'need')]),
-      day('หมู่บ้านน้ำจูเจียเจี่ยว',[
+      day('Shanghai Disneyland',[
         it('08:30',75,'รถไฟใต้ดินสาย 17 ไปจูเจียเจี่ยว','move','Zhujiajiao Station','朱家角站','31.1135,121.0598',7,'',false),
-        it('10:00',180,'เที่ยวหมู่บ้าน + นั่งเรือ','sight','Zhujiajiao Ancient Town','朱家角古镇','31.1086,121.0566',80,'',true),
+        it('10:00',480,'Shanghai Disneyland','sight','Shanghai Disneyland','上海迪士尼度假区','31.1440,121.6570',475,'ใช้เวลาทั้งวัน',true,'need'),
         it('13:00',60,'อาหารพื้นเมือง','food','Zhujiajiao Ancient Town','朱家角古镇','31.1086,121.0566',80,'ขาหมูตงพอ / บ๊ะจ่าง',false),
         it('18:30',120,'กินหม้อไฟ Haidilao','food','Haidilao Hot Pot','海底捞火锅','',150,'เลือกสาขาใกล้โรงแรม',false)]),
       day('ช้อปปิ้ง & กลับบ้าน',[
@@ -401,7 +723,7 @@ function saveSync(){
 }
 function stopSync(){disconnect();P.room='';P.joined='';saveJ(PKEY,P);setSync('off');render()}
 function copyInvite(){copyText(`${location.href.split('#')[0]}#join=${encodeURIComponent(P.room)}&db=${encodeURIComponent(P.db)}`,'คัดลอกลิงก์ชวนแล้ว ส่งให้เพื่อนเปิดได้เลย 📨')}
-function copyText(t,msg){if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast(msg),()=>prompt('คัดลอก:',t));else prompt('คัดลอก:',t)}
+function copyText(t,msg){t=T(t);if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast(msg),()=>prompt('คัดลอก:',t));else prompt('คัดลอก:',t)}
 function setMe(id){P.me=id;saveJ(PKEY,P);beat();render()}
 addEventListener('beforeunload',disconnect);
 document.addEventListener('visibilitychange',()=>{
@@ -483,7 +805,7 @@ function shiftDayTime(dId,delta){
 function swapPlan(a,b){const A=S.days[a],B=S.days[b];[A.title,B.title]=[B.title,A.title];[A.items,B.items]=[B.items,A.items];commit();toast(`สลับแผนวันที่ ${a+1} ↔ ${b+1} แล้ว`)}
 
 /* ================= Modal & Form ================= */
-function modalHTML(h){const m=document.getElementById('modal');m.innerHTML=`<div class="box">${h}</div>`;m.classList.add('show')}
+function modalHTML(h){const m=document.getElementById('modal');m.innerHTML=`<div class="box">${h}</div>`;m.classList.add('show');trDom(m)}
 function closeModal(){document.getElementById('modal').classList.remove('show');if(ui.pending){ui.pending=false;render()}}
 function field(f,v){
   const id='f_'+f.k;let input;
@@ -538,7 +860,7 @@ async function geo(){
 function fillPreset(idx){
   const p=PLACES[idx];if(!p)return;
   const set=(k,val)=>{const el=document.getElementById('f_'+k);if(el&&val!=null){if(el.type==='checkbox')el.checked=!!val;else el.value=val}};
-  set('title',p.title);set('name',p.title);set('place',p.place);set('zh',p.zh);set('addr',p.addr);
+  set('title',T(p.title));set('name',T(p.title));set('place',p.place);set('zh',p.zh);set('addr',p.addr);
   set('ll',p.ll);set('cat',p.cat);set('dur',p.dur);set('cost',p.cost);set('outdoor',p.outdoor);set('book',p.book||'');
   toast('เติมข้อมูล '+p.title+' แล้ว ✨');
 }
@@ -598,7 +920,7 @@ function renderHeader(){
   const st={on:'🟢 ซิงก์แล้ว',wait:'🟡 กำลังเชื่อมต่อ',err:'🔴 ซิงก์ผิดพลาด',off:'⚪ ซิงก์ออฟไลน์'};
   document.getElementById('hdr').innerHTML=`<div class="row" style="justify-content:space-between;align-items:flex-start;flex-wrap:nowrap"><div><h1>${esc(S.trip.name)}</h1>
   <div class="sub">📅 ${thDate(dayDate(0))} – ${thDate(dayDate(Math.max(0,S.days.length-1)))} · ${S.days.length} วัน · ¥1 = ฿${S.trip.rate}</div></div>
-  <div class="sub" style="text-align:right">${navigator.onLine?'':'📴 ออฟไลน์<br>'}${syncOn()?`<span style="cursor:pointer;text-decoration:underline" onclick="manualSync()" title="แตะเพื่อซิงก์ทันที">${st[sync.status]||''} 🔄</span>`:''}</div></div>
+  <div class="sub" style="text-align:right">${langSwitchHTML()}${navigator.onLine?'':'📴 ออฟไลน์<br>'}${syncOn()?`<span style="cursor:pointer;text-decoration:underline" onclick="manualSync()" title="แตะเพื่อซิงก์ทันที">${st[sync.status]||''} 🔄</span>`:''}</div></div>
   <div class="row" style="margin-top:8px">${S.members.map(m=>`<span class="hchip" onclick="setMe('${m.id}')" title="แตะเพื่อเลือกฉันคือ ${esc(m.name)}"><i style="background:${esc(m.color)}"></i>${esc(m.name)}${P.me===m.id?' (ฉัน)':''}${sync.online[m.id]?' <b class="live">●</b>':''}</span>`).join('')}</div>`;
 }
 
@@ -719,7 +1041,7 @@ function editItem(dayId,itemId){
       const obj={id:it.id||uid(),time:v.time,dur:v.dur||60,title:v.title,cat:v.cat,place:v.place,zh:v.zh,addr:v.addr,ll:v.ll,outdoor:v.outdoor,book:v.book||'',cost:v.cost,note:v.note,done:!!it.done,pCap:it.pCap||'',pSticker:it.pSticker||'🥟',pStyle:it.pStyle||'polaroid',pBy:it.pBy||''};
       if(itemId)d.items=d.items.filter(x=>x.id!==itemId);
       dayById(v.day).items.push(obj);commit();toast('บันทึกแล้ว ✓');
-    },itemId?()=>{snapForUndo(`ลบ "${it.title}" แล้ว`,()=>{d.items=d.items.filter(x=>x.id!==itemId)})}:null,presetSelectHTML(),dupBtn);
+    },itemId?()=>{snapForUndo(`ลบแล้ว: "${it.title}"`,()=>{d.items=d.items.filter(x=>x.id!==itemId)})}:null,presetSelectHTML(),dupBtn);
 }
 function dupItem(dayId,itemId){
   const d=dayById(dayId),it=d?.items.find(x=>x.id===itemId);if(!it)return;
@@ -733,7 +1055,7 @@ function moveDay(id,dir){const k=S.days.findIndex(x=>x.id===id),j=k+dir;if(j<0||
 function delDay(id){
   const d=dayById(id);if(!d)return;
   if(confirm(`ลบ "${d.title}" และกิจกรรมทั้งหมดในวันนี้?`)){
-    snapForUndo(`ลบวัน "${d.title}" แล้ว`,()=>{S.days=S.days.filter(x=>x.id!==id);if(ui.dayFilter===id)ui.dayFilter=''});
+    snapForUndo(`ลบแล้ว: "${d.title}"`,()=>{S.days=S.days.filter(x=>x.id!==id);if(ui.dayFilter===id)ui.dayFilter=''});
   }
 }
 
@@ -763,6 +1085,7 @@ async function drawMap(){
   catch(e){el.innerHTML='<p class="mute" style="padding:16px">โหลดแผนที่ไม่ได้ (ต้องต่ออินเทอร์เน็ตครั้งแรก)</p>';return}
   if(map){try{map.remove()}catch(e){}map=null}
   if(!document.getElementById('map'))return;
+  if(!L._trp){const _bp=L.Layer.prototype.bindPopup;L.Layer.prototype.bindPopup=function(c,o){return _bp.call(this,typeof c==='string'?T(c):c,o)};L._trp=1}
   map=L.map(el).setView([31.23,121.47],12);
   const tl=TILES[P.tile]||TILES.osm;
   L.tileLayer(tl.url,{maxZoom:19,attribution:tl.attr}).addTo(map);
@@ -918,7 +1241,7 @@ function editExp(id,pre={}){
   };
   if(id)document.getElementById('fDel').onclick=()=>{
     closeModal();
-    snapForUndo(`ลบรายจ่าย "${e.desc}" แล้ว`,()=>{S.expenses=S.expenses.filter(x=>x.id!==id)});
+    snapForUndo(`ลบแล้ว: "${e.desc}"`,()=>{S.expenses=S.expenses.filter(x=>x.id!==id)});
   };
 }
 function toggleExpMode(m){
@@ -963,7 +1286,7 @@ function addCheck(){const t=document.getElementById('ckText').value.trim();if(!t
 function togCheck(id){const c=S.checklist.find(x=>x.id===id);c.done=!c.done;commit()}
 function delCheck(id){
   const c=S.checklist.find(x=>x.id===id);if(!c)return;
-  snapForUndo(`ลบ "${c.text}" แล้ว`,()=>{S.checklist=S.checklist.filter(x=>x.id!==id)});
+  snapForUndo(`ลบแล้ว: "${c.text}"`,()=>{S.checklist=S.checklist.filter(x=>x.id!==id)});
 }
 
 /* ================= Wishlist ================= */
@@ -980,7 +1303,7 @@ function editWish(id){
   const w=id?S.wishlist.find(x=>x.id===id):{name:'',cat:'sight',note:'',votes:[]};
   form(id?'แก้ไขที่อยากไป':'เพิ่มที่อยากไป',[{k:'name',label:'ชื่อสถานที่ / ร้าน'},{k:'cat',label:'หมวด',type:'select',options:CATS},{k:'note',label:'โน้ต / เหตุผล',type:'textarea'}],w,v=>{
     if(!v.name)return toast('ใส่ชื่อสถานที่'),false;if(id)Object.assign(w,v);else S.wishlist.push({id:uid(),...v,votes:[]});commit();
-  },id?()=>{snapForUndo(`ลบ "${w.name}" แล้ว`,()=>{S.wishlist=S.wishlist.filter(x=>x.id!==id)})}:null,presetSelectHTML());
+  },id?()=>{snapForUndo(`ลบแล้ว: "${w.name}"`,()=>{S.wishlist=S.wishlist.filter(x=>x.id!==id)})}:null,presetSelectHTML());
 }
 function wishToPlan(id){
   const w=S.wishlist.find(x=>x.id===id);if(!S.days.length)return toast('เพิ่มวันในแผนก่อน');
@@ -1425,7 +1748,7 @@ function viewPhoto(dId,n){modalHTML(`<img src="${PH[dId][n]}" style="width:100%;
 function loadImg(src){return new Promise((r,j)=>{const i=new Image();i.onload=()=>r(i);i.onerror=j;i.src=src})}
 function graphemes(t){try{return [...new Intl.Segmenter('th',{granularity:'grapheme'}).segment(t)].map(s=>s.segment)}catch(e){return Array.from(t)}}
 function wrapText(x,t,X,Y,maxW,lh,maxL=2){
-  const g=graphemes(String(t));let line='',n=1;
+  const tt=T(String(t));const g=LG==='en'?(tt.match(/\S+\s*|\s+/g)||[]):graphemes(tt);let line='',n=1;
   for(let i=0;i<g.length;i++){const test=line+g[i];
     if(x.measureText(test).width>maxW&&line){
       if(n>=maxL){while(x.measureText(line+'…').width>maxW&&line.length>1)line=line.slice(0,-1);x.fillText(line+'…',X,Y);return Y+lh}
@@ -1448,7 +1771,7 @@ async function makeRecap(){
   x.font=F(400,32);x.globalAlpha=.9;x.fillText(`📅 ${thDate(dayDate(0))} – ${thDate(dayDate(Math.max(0,S.days.length-1)))}`,70,y);x.globalAlpha=1;y+=50;
   const items=S.days.flatMap(d=>d.items).filter(i=>i.cat!=='move'&&i.cat!=='hotel'),done=items.filter(i=>i.done).length;
   const total=S.expenses.reduce((s,e)=>s+toTHB(e),0);
-  const stats=[[S.days.length+' วัน','ระยะเวลาทริป'],[(done||items.length)+' ที่',done?'เช็คอินแล้ว':'ในแผนเที่ยว'],['฿'+fmt(total),'ใช้จ่ายรวม'],[photos.length+' รูป','ความทรงจำ']];
+  const stats=[[S.days.length+' วัน','ระยะเวลาทริป'],[(done||items.length)+' แห่ง',done?'เช็คอินแล้ว':'ในแผนเที่ยว'],['฿'+fmt(total),'ใช้จ่ายรวม'],[photos.length+' รูป','ความทรงจำ']];
   const bw=455,bh=170;
   stats.forEach(([v,l],k)=>{const bx=70+(k%2)*(bw+30),by=y+Math.floor(k/2)*(bh+30);x.fillStyle='rgba(255,255,255,.14)';rr(x,bx,by,bw,bh,28);
     x.fillStyle='#fff';x.font=F(700,60);x.fillText(v,bx+34,by+92);x.font=F(400,28);x.globalAlpha=.85;x.fillText(l,bx+34,by+138);x.globalAlpha=1});
@@ -1458,7 +1781,7 @@ async function makeRecap(){
   let bestD=-1,bestA=0;S.days.forEach((d,k)=>{const v=Object.values(d.diary.ratings).filter(Boolean);if(v.length){const a=v.reduce((p,q)=>p+q,0)/v.length;if(a>bestA){bestA=a;bestD=k}}});
   if(bestD>=0)hl.push(`⭐ วันที่ประทับใจสุด: วันที่ ${bestD+1} ${S.days[bestD].title} (${bestA.toFixed(1)})`);
   if(S.expenses.length){const b=balances(),top=S.members.slice().sort((a,c)=>b[c.id].paid-b[a.id].paid)[0];hl.push(`💳 สายเปย์ประจำทริป: ${top.name} (฿${fmt(b[top.id].paid)})`);
-    const bc={};S.expenses.forEach(e=>bc[e.cat]=(bc[e.cat]||0)+toTHB(e));const tc=Object.entries(bc).sort((a,c)=>c[1]-a[1])[0];hl.push(`📊 หมดไปกับ${(ECATS[tc[0]]||'x อื่นๆ').split(' ')[1]}มากสุด ฿${fmt(tc[1])}`)}
+    const bc={};S.expenses.forEach(e=>bc[e.cat]=(bc[e.cat]||0)+toTHB(e));const tc=Object.entries(bc).sort((a,c)=>c[1]-a[1])[0];hl.push(`📊 หมดไปกับ${T((ECATS[tc[0]]||'x อื่นๆ').split(' ')[1])}มากสุด ฿${fmt(tc[1])}`)}
   if(!hl.length)hl.push('✨ ทริปนี้กำลังจะเป็นความทรงจำที่ดีที่สุด!');
   x.fillStyle='#fff';x.font=F(500,34);hl.slice(0,4).forEach(t=>{y=wrapText(x,t,70,y,940,46,2)+14});
   let mx=70;const my=H1-110;x.font=F(500,30);
@@ -1482,18 +1805,18 @@ function renderFun(){
 function setupWheel(){
   if(ui.game==='food'){
     const opts=[...new Set([...S.foods,...S.wishlist.filter(w=>w.cat==='food').map(w=>w.name)])];
-    wheel.segs=opts.map((l,i)=>({label:l,w:1,color:PAL[i%PAL.length]}));
+    wheel.segs=opts.map((l,i)=>({label:T(l),w:1,color:PAL[i%PAL.length]}));
     wheel.cb=s=>res(`🎉 มื้อนี้กิน <b>${esc(s.label)}</b>!`);
   }else{
     const b=balances(),paid=S.members.map(m=>b[m.id].paid),mx=Math.max(0,...paid);
-    wheel.segs=S.members.map((m,i)=>({label:m.name,id:m.id,w:ui.payMode==='fair'?(mx-paid[i])+mx*0.15+1:1,color:m.color}));
+    wheel.segs=S.members.map((m,i)=>({label:T(m.name),id:m.id,w:ui.payMode==='fair'?(mx-paid[i])+mx*0.15+1:1,color:m.color}));
     const tot=wheel.segs.reduce((s,x)=>s+x.w,0),od=document.getElementById('odds');
-    if(od)od.innerHTML='โอกาส: '+wheel.segs.map(s=>`${esc(s.label)} ${Math.round(s.w/tot*100)}%`).join(' · ');
+    if(od)od.innerHTML=T('โอกาส: ')+wheel.segs.map(s=>`${esc(s.label)} ${Math.round(s.w/tot*100)}%`).join(' · ');
     wheel.cb=s=>res(`💸 รอบนี้ <b>${esc(s.label)}</b> จ่าย!<br><button class="btn s" onclick="editExp(null,{payer:'${s.id}'})">📝 บันทึกรายจ่าย</button>`);
   }
   drawWheel();if(document.fonts)document.fonts.ready.then(drawWheel);
 }
-function res(h){const el=document.getElementById('wres');if(el)el.innerHTML=h}
+function res(h){const el=document.getElementById('wres');if(el)el.innerHTML=T(h)}
 function drawWheel(){
   const c=document.getElementById('wheel');if(!c)return;const x=c.getContext('2d'),R=c.width/2,segs=wheel.segs;x.clearRect(0,0,c.width,c.height);
   if(!segs.length){x.font='28px Prompt';x.textAlign='center';x.fillStyle='#999';x.fillText('ยังไม่มีตัวเลือก',R,R);return}
@@ -1546,13 +1869,13 @@ const PHRASES=[
 ];
 function renderInfo(){
   const pq=ui.phrQ.trim().toLowerCase();
-  const phs=PHRASES.filter(([c,zh,py,thPron,th])=>(!ui.phrCat||ui.phrCat==='all'||c===ui.phrCat)&&(!pq||[zh,py,thPron,th].some(x=>x.toLowerCase().includes(pq))));
+  const phs=PHRASES.filter(([c,zh,py,thPron,th])=>(!ui.phrCat||ui.phrCat==='all'||c===ui.phrCat)&&(!pq||[zh,py,thPron,th,T(th)].some(x=>x.toLowerCase().includes(pq))));
   return `<div class="card" style="text-align:center"><button class="btn p" style="font-size:17px;padding:10px 22px" onclick="taxiHotel()">🚕 การ์ด "พาฉันกลับโรงแรม"</button></div>
   <div class="card"><h3>💱 แปลงสกุลเงินด่วน</h3>
     <div class="row" style="margin-bottom:8px">${[10,50,100,200,500,1000].map(v=>`<button class="pill" onclick="setConv(${v})">¥${v}</button>`).join('')}</div>
     <div class="row"><div class="fld" style="flex:1"><span>หยวน ¥ (CNY)</span><input id="cvC" type="number" inputmode="decimal" value="100" oninput="document.getElementById('cvT').value=(this.value*S.trip.rate).toFixed(2)"></div>
     <div class="fld" style="flex:1"><span>บาท ฿ (THB)</span><input id="cvT" type="number" inputmode="decimal" value="${(100*S.trip.rate).toFixed(2)}" oninput="document.getElementById('cvC').value=(this.value/S.trip.rate).toFixed(2)"></div></div>
-    <p class="mute" style="margin:0">¥1 = ฿${S.trip.rate}${S.trip.rateAt?' · อัปเดต '+new Date(S.trip.rateAt).toLocaleString('th-TH'):''} · 💡 จ่ายผ่าน Alipay ด้วยบัตรต่างประเทศ ถ้ายอด ≤ ¥200 ไม่เสียค่าธรรมเนียม 3%</p>
+    <p class="mute" style="margin:0">¥1 = ฿${S.trip.rate}${S.trip.rateAt?' · อัปเดต '+new Date(S.trip.rateAt).toLocaleString(LOC()):''} · 💡 จ่ายผ่าน Alipay ด้วยบัตรต่างประเทศ ถ้ายอด ≤ ¥200 ไม่เสียค่าธรรมเนียม 3%</p>
   </div>
   <div class="card"><h3>🗣️ ประโยคภาษาจีนเอาตัวรอด</h3>
     <div class="row" style="margin-bottom:8px">
@@ -1560,7 +1883,7 @@ function renderInfo(){
       <input style="width:160px;flex:1" placeholder="🔎 ค้นหาประโยค..." value="${esc(ui.phrQ)}" oninput="ui.phrQ=this.value;renderMain()">
     </div>
     <p class="mute">แตะตัวจีนเพื่อขยายเต็มจอให้คนจีนอ่าน · แตะ 🔊 เพื่อออกเสียง</p>
-    ${phs.map(([c,zh,py,pron,th])=>`<div class="phr"><div><div class="zh" lang="zh" onclick="bigText('${jsq(zh)}','${jsq(pron+' · '+th)}')">${zh}</div><div class="mute"><b>${th}</b> · ${pron} (${py})</div></div><button class="btn s" onclick="speak('${jsq(zh)}')">🔊</button></div>`).join('')}
+    ${phs.map(([c,zh,py,pron,th])=>`<div class="phr"><div><div class="zh" lang="zh" onclick="bigText('${jsq(zh)}','${jsq((LG==='th'?pron:py)+' · '+th)}')">${zh}</div><div class="mute"><b>${th}</b> · ${LG==='th'?pron+' ('+py+')':py}</div></div><button class="btn s" onclick="speak('${jsq(zh)}')">🔊</button></div>`).join('')}
   </div>
   <div class="card"><h3>🚨 เบอร์ฉุกเฉินในจีน</h3><div class="grid" style="margin:0">${stat('ตำรวจ','110')}${stat('รถพยาบาล','120')}${stat('ดับเพลิง','119')}${stat('อุบัติเหตุจราจร','122')}</div></div>
   <div class="card"><h3>📱 ทริคสำคัญเมื่อเที่ยวจีน</h3>
@@ -1581,13 +1904,13 @@ addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e})
 function installApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null}else alert('iPhone: เปิดใน Safari → ปุ่มแชร์ → "เพิ่มไปยังหน้าจอโฮม"\nAndroid: เมนู ⋮ → "ติดตั้งแอป" หรือ "เพิ่มลงในหน้าจอหลัก"\n\n* ต้องเปิดจากเว็บที่โฮสต์ (https) ถึงจะติดตั้งและใช้ออฟไลน์ได้')}
 function renderSet(){
   const h=S.trip.hotel,st={on:'🟢 เชื่อมต่อแล้ว',wait:'🟡 กำลังเชื่อมต่อ',err:'🔴 ผิดพลาด: เช็ค URL และกฎ (Rules)',off:'⚪ ไม่ได้เชื่อมต่อ'};
-  return `<div class="card"><h3>🧳 ข้อมูลทริป</h3><div class="grid" style="margin:0">
+  return langCardHTML()+`<div class="card"><h3>🧳 ข้อมูลทริป</h3><div class="grid" style="margin:0">
   <div class="fld"><span>ชื่อทริป</span><input value="${esc(S.trip.name)}" onchange="S.trip.name=this.value;commit()"></div>
   <div class="fld"><span>วันเริ่มเดินทาง</span><input type="date" value="${S.trip.start}" onchange="if(this.value){S.trip.start=this.value;commit();updateWeather(true)}"></div>
   <div class="fld"><span>อัตราแลกเปลี่ยน (฿ ต่อ ¥1)</span><div class="row" style="flex-wrap:nowrap"><input type="number" step="0.001" value="${S.trip.rate}" onchange="S.trip.rate=parseFloat(this.value)||1;S.trip.autoRate=false;commit()"><button class="btn s" onclick="updateRate(true)" title="ดึงเรทล่าสุด">🔄</button></div></div>
   <div class="fld"><span>งบต่อคน (฿)</span><input type="number" value="${S.trip.budget}" onchange="S.trip.budget=parseFloat(this.value)||0;commit()"></div></div>
   <label class="chk"><input type="checkbox" ${S.trip.autoRate?'checked':''} onchange="S.trip.autoRate=this.checked;commit();if(this.checked)updateRate(true)"> อัปเดตเรทอัตโนมัติ</label>
-  <span class="mute">${S.trip.rateAt?'ล่าสุด '+new Date(S.trip.rateAt).toLocaleString('th-TH'):''}</span></div>
+  <span class="mute">${S.trip.rateAt?'ล่าสุด '+new Date(S.trip.rateAt).toLocaleString(LOC()):''}</span></div>
   <div class="card"><h3>🏨 โรงแรมที่พัก</h3>${h.name||h.zh?`<div><b>${esc(h.name)}</b> <span lang="zh">${esc(h.zh)}</span></div><div class="mute">${esc(h.addr)} ${h.phone?'☎ '+esc(h.phone):''}</div>`:'<p class="mute">ยังไม่ได้ใส่ ใช้สำหรับการ์ด "กลับโรงแรม" และหมุดบนแผนที่</p>'}
   <div class="row" style="margin-top:8px"><button class="btn" onclick="editHotel()">✎ แก้ไขข้อมูลโรงแรม</button><button class="btn" onclick="taxiHotel()">🚕 ดูการ์ด</button></div></div>
   <div class="card"><h3>🙋 ฉันคือ</h3><div class="row">${S.members.map(m=>`<span class="chip ${P.me===m.id?'':'off'}" style="background:${esc(m.color)};cursor:pointer" onclick="setMe('${m.id}')">${esc(m.name)}</span>`).join('')}</div><p class="mute">ใช้แสดงสถานะออนไลน์และเป็นคนจ่ายเริ่มต้น (ตั้งเฉพาะเครื่องนี้)</p></div>
@@ -1599,7 +1922,7 @@ function renderSet(){
   <div class="card"><h3>👥 สมาชิก (${S.members.length} คน)</h3>${S.members.map(m=>`<div class="row" style="margin-bottom:8px;flex-wrap:nowrap"><input type="color" value="${esc(m.color)}" style="width:48px;height:40px;padding:2px;flex:none" onchange="setMember('${m.id}','color',this.value)"><input value="${esc(m.name)}" onchange="setMember('${m.id}','name',this.value)"><button class="btn s" onclick="delMember('${m.id}')">🗑</button></div>`).join('')}
   <button class="btn" onclick="addMember()">+ เพิ่มสมาชิก</button></div>
   <div class="card"><h3>🎨 การแสดงผล & แอป</h3><div class="row"><label class="chk"><input type="checkbox" ${P.dark?'checked':''} onchange="P.dark=this.checked;saveJ(PKEY,P);render()"> 🌙 โหมดมืด</label>${standalone?'<span class="mute">✅ ติดตั้งเป็นแอปแล้ว</span>':'<button class="btn" onclick="installApp()">📲 ติดตั้งแอป</button>'}</div></div>
-  <div class="card"><h3>💾 สำรองข้อมูล & แชร์แผน (v3.0)</h3><p class="mute">สำรองข้อมูลเป็นไฟล์ JSON หรือส่งลิงก์แผนให้เพื่อนแบบไม่ใช้ Firebase (ไม่รวมรูปในไดอารี่)</p>
+  <div class="card"><h3>💾 สำรองข้อมูล & แชร์แผน (v3.2)</h3><p class="mute">สำรองข้อมูลเป็นไฟล์ JSON หรือส่งลิงก์แผนให้เพื่อนแบบไม่ใช้ Firebase (ไม่รวมรูปในไดอารี่)</p>
   <div class="row"><button class="btn" onclick="shareLink()">🔗 ลิงก์แชร์แผน</button><button class="btn" onclick="exportJSON()">⬇️ ส่งออกไฟล์ JSON</button>
   <label class="btn">⬆️ นำเข้าไฟล์<input type="file" accept=".json,application/json" hidden onchange="importJSON(this)"></label>
   <button class="btn" onclick="window.print()">🖨️ พิมพ์แผน</button><button class="btn danger" onclick="resetAll()">↺ รีเซ็ตทั้งหมด</button></div></div>`;
@@ -1612,9 +1935,9 @@ function delMember(id){
   if(S.members.length<=1)return toast('ต้องมีสมาชิกอย่างน้อย 1 คน');
   const paidCount=S.expenses.filter(e=>e.payer===id).length;
   const others=S.members.filter(m=>m.id!==id);
-  const msg=paidCount?`ลบ ${M(id).name}? (รายการที่ ${M(id).name} เคยจ่าย ${paidCount} รายการจะถูกโอนให้ ${others[0].name})`:`ยืนยันการลบ ${M(id).name}?`;
+  const msg=paidCount?`ยืนยันการลบ ${M(id).name}? (รายการที่ ${M(id).name} เคยจ่าย ${paidCount} รายการจะถูกโอนให้ ${others[0].name})`:`ยืนยันการลบ ${M(id).name}?`;
   if(!confirm(msg))return;
-  snapForUndo(`ลบสมาชิก ${M(id).name} แล้ว`,()=>{
+  snapForUndo(`ลบแล้ว: ${M(id).name}`,()=>{
     S.members=others;
     S.expenses.forEach(e=>{
       e.split=(e.split||[]).filter(x=>x!==id);
@@ -1651,7 +1974,7 @@ const VIEWS={home:renderHome,plan:renderPlan,map:renderMap,money:renderMoney,che
 function go(t){ui.tab=t;render();scrollTo(0,0)}
 function renderMain(){
   if(map){try{map.remove()}catch(e){}map=null}
-  document.getElementById('main').innerHTML=VIEWS[ui.tab]();document.title=S.trip.name;
+  document.getElementById('main').innerHTML=VIEWS[ui.tab]();trDom(document.getElementById('main'));document.title=T(S.trip.name);
   if(ui.tab==='map')drawMap();if(ui.tab==='fun')setupWheel();
 }
 function render(){
@@ -1666,8 +1989,10 @@ addEventListener('online',()=>{renderHeader();push();updateRate();updateWeather(
 addEventListener('offline',renderHeader);
 setInterval(()=>{if(ui.tab==='home'&&!ui.sim&&!modalOpen()&&!typing())renderMain()},30000);
 
+const _renderHeader=renderHeader;renderHeader=function(){_renderHeader();trDom(document.getElementById('hdr'))};
 genAppleIcon();
 render();
+applyLang();
 connect();
 updateRate();updateWeather();
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
